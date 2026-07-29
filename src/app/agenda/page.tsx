@@ -1,5 +1,9 @@
 import Link from "next/link";
 import clsx from "clsx";
+import {
+  completeActivityAction,
+  rescheduleActivityAction,
+} from "@/app/clients/[id]/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { activityTypeLabel } from "@/lib/crm/constants";
@@ -37,8 +41,65 @@ type AgendaRow = {
 };
 
 type AgendaPageProps = {
-  searchParams: Promise<{ week?: string; seller?: string }>;
+  searchParams: Promise<{ week?: string; seller?: string; error?: string }>;
 };
+
+function QuickActivityActions({ row }: { row: AgendaRow }) {
+  if (!row.clients) {
+    return null;
+  }
+
+  const completeAction = completeActivityAction.bind(null, row.id, row.clients.id, "/agenda");
+  const rescheduleAction = rescheduleActivityAction.bind(null, row.id, row.clients.id, "/agenda");
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <details>
+        <summary className="cursor-pointer text-label-sm font-bold text-primary">Completar</summary>
+        <form action={completeAction} className="mt-2 space-y-2">
+          <textarea
+            name="outcome"
+            required
+            rows={2}
+            placeholder="Que resulto del contacto?"
+            className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          />
+          <label className="block text-label-sm text-on-surface-variant">
+            Proximo seguimiento (opcional)
+            <input
+              type="datetime-local"
+              name="nextScheduledAt"
+              className="mt-1 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:outline-none"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-xl bg-primary px-4 py-2 text-label-sm font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
+          >
+            Marcar realizada
+          </button>
+        </form>
+      </details>
+      <details>
+        <summary className="cursor-pointer text-label-sm font-bold text-primary">Reprogramar</summary>
+        <form action={rescheduleAction} className="mt-2 flex flex-wrap items-center gap-2">
+          <input
+            type="datetime-local"
+            name="scheduledAt"
+            required
+            className="rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:outline-none"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-primary px-4 py-2 text-label-sm font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
+          >
+            Guardar
+          </button>
+        </form>
+      </details>
+    </div>
+  );
+}
 
 function clientName(row: AgendaRow) {
   const client = row.clients;
@@ -118,6 +179,11 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
 
   return (
     <AppShell profile={profile} title="Agenda">
+      {params.error ? (
+        <p className="mb-4 rounded-xl border border-error/30 bg-error-container/40 px-4 py-3 text-body-md font-medium text-on-error-container">
+          {params.error}
+        </p>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         {/* Calendario semanal */}
         <div>
@@ -264,24 +330,39 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
             ) : (
               <ul className="space-y-3">
                 {todayRows.map((row) => (
-                  <li key={row.id}>
-                    <Link
-                      href={row.clients ? `/clients/${row.clients.id}` : "/agenda"}
-                      className="group flex items-start gap-3"
-                    >
-                      <span className="material-symbols-outlined mt-0.5 text-outline transition-colors group-hover:text-primary">
+                  <li key={row.id} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low/40 p-3">
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined mt-0.5 text-outline">
                         radio_button_unchecked
                       </span>
-                      <div className="min-w-0">
-                        <p className="truncate font-bold group-hover:underline">{clientName(row)}</p>
+                      <div className="min-w-0 flex-1">
+                        {row.clients ? (
+                          <Link href={`/clients/${row.clients.id}`} className="block truncate font-bold hover:underline">
+                            {clientName(row)}
+                          </Link>
+                        ) : (
+                          <p className="truncate font-bold">{clientName(row)}</p>
+                        )}
                         <p className="text-label-sm text-on-surface-variant">
                           {activityTypeLabel(row.type)} - Hoy, {formatTimeAr(row.scheduled_at)}
                         </p>
                         {row.objective ? (
                           <p className="truncate text-label-sm text-on-surface-variant">{row.objective}</p>
                         ) : null}
+                        <QuickActivityActions row={row} />
                       </div>
-                    </Link>
+                      {row.clients ? (
+                        <a
+                          href={`https://wa.me/${row.clients.phone_normalized.replace(/\D+/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Abrir WhatsApp"
+                          className="rounded-full bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
+                        >
+                          <span className="material-symbols-outlined text-base">chat</span>
+                        </a>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -334,6 +415,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                           Contactar ahora
                         </a>
                       ) : null}
+                      <QuickActivityActions row={row} />
                     </li>
                   );
                 })}

@@ -125,7 +125,16 @@ export async function scheduleFollowUpAction(clientId: string, formData: FormDat
   redirect(`/clients/${clientId}`);
 }
 
-export async function completeActivityAction(activityId: string, clientId: string, formData: FormData) {
+function withError(target: string, message: string) {
+  return `${target}${target.includes("?") ? "&" : "?"}error=${encodeURIComponent(message)}`;
+}
+
+export async function completeActivityAction(
+  activityId: string,
+  clientId: string,
+  redirectTo: string,
+  formData: FormData,
+) {
   const { supabase, user } = await getCurrentUserContext();
 
   try {
@@ -173,14 +182,19 @@ export async function completeActivityAction(activityId: string, clientId: strin
       }
     }
   } catch (error) {
-    redirect(`/clients/${clientId}?error=${encodeURIComponent(toErrorMessage(error))}`);
+    redirect(withError(redirectTo, toErrorMessage(error)));
   }
 
   revalidateClientViews(clientId);
-  redirect(`/clients/${clientId}`);
+  redirect(redirectTo);
 }
 
-export async function rescheduleActivityAction(activityId: string, clientId: string, formData: FormData) {
+export async function rescheduleActivityAction(
+  activityId: string,
+  clientId: string,
+  redirectTo: string,
+  formData: FormData,
+) {
   const { supabase } = await getCurrentUserContext();
 
   try {
@@ -210,14 +224,14 @@ export async function rescheduleActivityAction(activityId: string, clientId: str
       throw new Error(error.message);
     }
   } catch (error) {
-    redirect(`/clients/${clientId}?error=${encodeURIComponent(toErrorMessage(error))}`);
+    redirect(withError(redirectTo, toErrorMessage(error)));
   }
 
   revalidateClientViews(clientId);
-  redirect(`/clients/${clientId}`);
+  redirect(redirectTo);
 }
 
-export async function cancelActivityAction(activityId: string, clientId: string) {
+export async function cancelActivityAction(activityId: string, clientId: string, redirectTo: string) {
   const { supabase } = await getCurrentUserContext();
 
   try {
@@ -230,9 +244,9 @@ export async function cancelActivityAction(activityId: string, clientId: string)
       throw new Error(error.message);
     }
   } catch (error) {
-    redirect(`/clients/${clientId}?error=${encodeURIComponent(toErrorMessage(error))}`);
+    redirect(withError(redirectTo, toErrorMessage(error)));
   }
 
   revalidateClientViews(clientId);
-  redirect(`/clients/${clientId}`);
+  redirect(redirectTo);
 }

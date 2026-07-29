@@ -14,6 +14,7 @@ import {
   formatDateTimeAr,
   formatRelativeAr,
 } from "@/lib/crm/dates";
+import { buildMessageTemplates, waLink } from "@/lib/crm/whatsapp";
 import type { Activity, ClientStatusChange } from "@/types/database";
 import {
   cancelActivityAction,
@@ -150,6 +151,11 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     .join("")
     .toUpperCase();
   const defaultFollowUp = defaultFollowUpLocalValue();
+  const messageTemplates = buildMessageTemplates({
+    clientFirstName: client.first_name,
+    sellerName: (profile.full_name ?? "").split(/\s+/)[0] || "el equipo",
+    interest: interests[0],
+  });
 
   return (
     <AppShell profile={profile} title="Ficha de cliente">
@@ -369,6 +375,47 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           </section>
 
           <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+            <details>
+              <summary className="flex cursor-pointer items-center gap-2 text-headline-sm font-bold">
+                <span className="material-symbols-outlined text-green-600">chat</span>
+                Plantillas de WhatsApp
+                <span className="ml-auto text-label-sm font-semibold text-on-surface-variant">
+                  Tocar para ver
+                </span>
+              </summary>
+              <p className="mt-2 mb-4 text-body-md text-on-surface-variant">
+                Abren el chat con el texto ya escrito. Vos lo revisas, lo editas si queres, y lo mandas.
+                Nada se envia solo.
+              </p>
+              <ul className="space-y-3">
+                {messageTemplates.map((template) => (
+                  <li
+                    key={template.id}
+                    className="rounded-2xl border border-outline-variant/40 bg-surface-container-low/50 p-4"
+                  >
+                    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-bold">{template.label}</p>
+                      <a
+                        href={waLink(client.phone_normalized, template.text)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 rounded-full bg-green-600 px-4 py-1.5 text-label-sm font-bold text-white transition-all hover:bg-green-700 active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-sm">send</span>
+                        Usar
+                      </a>
+                    </div>
+                    <p className="text-label-sm text-on-surface-variant">{template.description}</p>
+                    <p className="mt-2 rounded-xl bg-surface-container-lowest px-3 py-2 text-body-md italic">
+                      &ldquo;{template.text}&rdquo;
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </section>
+
+          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
             <h2 className="mb-4 text-headline-sm font-bold">Historial de actividad</h2>
             {timeline.length === 0 ? (
               <p className="text-body-md text-on-surface-variant">Todavia no hay actividad registrada.</p>
@@ -419,9 +466,10 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
               <ul className="space-y-3">
                 {pendingActivities.map((activity) => {
                   const overdue = activity.scheduled_at < nowIso;
-                  const completeAction = completeActivityAction.bind(null, activity.id, client.id);
-                  const rescheduleAction = rescheduleActivityAction.bind(null, activity.id, client.id);
-                  const cancelAction = cancelActivityAction.bind(null, activity.id, client.id);
+                  const fichaPath = `/clients/${client.id}`;
+                  const completeAction = completeActivityAction.bind(null, activity.id, client.id, fichaPath);
+                  const rescheduleAction = rescheduleActivityAction.bind(null, activity.id, client.id, fichaPath);
+                  const cancelAction = cancelActivityAction.bind(null, activity.id, client.id, fichaPath);
 
                   return (
                     <li
