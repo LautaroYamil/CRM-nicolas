@@ -1,0 +1,347 @@
+import Link from "next/link";
+import clsx from "clsx";
+import { AppShell } from "@/components/layout/app-shell";
+import { getCurrentUserContext } from "@/lib/auth/current-user";
+import { activityTypeLabel } from "@/lib/crm/constants";
+import {
+  argDateStringOf,
+  argMonthYearLabel,
+  argTodayRange,
+  argWeekDays,
+  formatDateAr,
+  formatRelativeAr,
+  formatTimeAr,
+} from "@/lib/crm/dates";
+
+const ACTIVITY_ICONS: Record<string, string> = {
+  llamada: "call",
+  whatsapp: "chat",
+  email: "mail",
+  visita: "storefront",
+  reunion: "groups",
+  nota: "sticky_note_2",
+};
+
+type AgendaRow = {
+  id: string;
+  type: string;
+  scheduled_at: string;
+  objective: string | null;
+  assigned_user_id: string;
+  clients: {
+    id: string;
+    first_name: string;
+    last_name: string | null;
+    phone_normalized: string;
+  } | null;
+};
+
+type AgendaPageProps = {
+  searchParams: Promise<{ week?: string; seller?: string }>;
+};
+
+function clientName(row: AgendaRow) {
+  const client = row.clients;
+  return client ? `${client.first_name} ${client.last_name ?? ""}`.trim() : "Cliente";
+}
+
+export default async function AgendaPage({ searchParams }: AgendaPageProps) {
+  const params = await searchParams;
+  const { supabase, profile } = await getCurrentUserContext();
+
+  const weekOffset = Number.parseInt(params.week ?? "0", 10) || 0;
+  const week = argWeekDays(weekOffset);
+  const weekStartIso = week[0].startIso;
+  const weekEndIso = week[week.length - 1].endIso;
+  const { startIso: todayStartIso, endIso: todayEndIso } = argTodayRange();
+  const nowIso = new Date().toISOString();
+
+  const baseSelect =
+    "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized)";
+
+  let weekQuery = supabase
+    .from("activities")
+    .select(baseSelect)
+    .eq("status", "pendiente")
+    .gte("scheduled_at", weekStartIso)
+    .lt("scheduled_at", weekEndIso)
+    .order("scheduled_at", { ascending: true })
+    .limit(300);
+
+  let overdueQuery = supabase
+    .from("activities")
+    .select(baseSelect)
+    .eq("status", "pendiente")
+    .lt("scheduled_at", todayStartIso)
+    .order("scheduled_at", { ascending: true })
+    .limit(30);
+
+  if (profile.role === "admin" && params.seller) {
+    weekQuery = weekQuery.eq("assigned_user_id", params.seller);
+    overdueQuery = overdueQuery.eq("assigned_user_id", params.seller);
+  }
+
+  const [{ data: weekRows, error }, { data: overdueRows }, { data: sellerRows }] = await Promise.all([
+    weekQuery.returns<AgendaRow[]>(),
+    overdueQuery.returns<AgendaRow[]>(),
+    profile.role === "admin"
+      ? supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("active", true)
+          .returns<{ id: string; full_name: string | null }[]>()
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null }[], error: null }),
+  ]);
+
+  if (error) {
+    return (
+      <AppShell profile={profile} title="Agenda">
+        <p className="text-error">Error al cargar la agenda: {error.message}</p>
+      </AppShell>
+    );
+  }
+
+  const rowsByDay = new Map<string, AgendaRow[]>();
+  for (const row of weekRows ?? []) {
+    const day = argDateStringOf(row.scheduled_at);
+    const existing = rowsByDay.get(day) ?? [];
+    existing.push(row);
+    rowsByDay.set(day, existing);
+  }
+
+  const todayRows = (weekRows ?? []).filter(
+    (row) => row.scheduled_at >= todayStartIso && row.scheduled_at < todayEndIso,
+  );
+  const overdue = overdueRows ?? [];
+
+  const sellerParam = params.seller ? `&seller=${params.seller}` : "";
+
+  return (
+    <AppShell profile={profile} title="Agenda">
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+        {/* Calendario semanal */}
+        <div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-headline-md font-bold capitalize lg:text-headline-lg">
+              {argMonthYearLabel(week[0].startIso)}
+            </h1>
+            <div className="flex items-center gap-2">
+              {profile.role === "admin" ? (
+                <form method="get" className="flex items-center gap-2">
+                  <input type="hidden" name="week" value={String(weekOffset)} />
+                  <select
+                    name="seller"
+                    defaultValue={params.seller ?? ""}
+                    className="rounded-full border-none bg-surface-container-low px-4 py-2 text-body-md focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Todos los vendedores</option>
+                    {(sellerRows ?? []).map((seller) => (
+                      <option key={seller.id} value={seller.id}>
+                        {seller.full_name ?? seller.id}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-surface-container px-4 py-2 text-label-md font-semibold transition-colors hover:bg-surface-container-high"
+                  >
+                    Filtrar
+                  </button>
+                </form>
+              ) : null}
+              <Link
+                href={`/agenda?week=0${sellerParam}`}
+                className={clsx(
+                  "rounded-full border border-outline-variant px-4 py-2 text-label-md font-semibold transition-colors",
+                  weekOffset === 0
+                    ? "bg-primary-fixed text-primary"
+                    : "bg-surface-container-lowest hover:bg-surface-container",
+                )}
+              >
+                Hoy
+              </Link>
+              <Link
+                href={`/agenda?week=${weekOffset - 1}${sellerParam}`}
+                className="flex items-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined text-base">chevron_left</span>
+              </Link>
+              <Link
+                href={`/agenda?week=${weekOffset + 1}${sellerParam}`}
+                className="flex items-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined text-base">chevron_right</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-3 shadow-sm">
+            <div className="grid min-w-[720px] grid-cols-6 gap-2">
+              {week.map((day) => {
+                const dayRows = rowsByDay.get(day.dateStr) ?? [];
+
+                return (
+                  <div key={day.dateStr} className="flex min-h-72 flex-col">
+                    <div
+                      className={clsx(
+                        "mb-2 rounded-xl px-2 py-2 text-center",
+                        day.isToday ? "bg-primary-fixed" : "bg-surface-container-low/60",
+                      )}
+                    >
+                      <p
+                        className={clsx(
+                          "text-[10px] font-bold tracking-wider uppercase",
+                          day.isToday ? "text-primary" : "text-on-surface-variant",
+                        )}
+                      >
+                        {day.weekdayLabel}
+                      </p>
+                      <p className={clsx("text-body-lg font-bold", day.isToday && "text-primary")}>
+                        {day.dayNumber}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-1 flex-col gap-2">
+                      {dayRows.map((row) => {
+                        const missed = row.scheduled_at < nowIso;
+
+                        return (
+                          <Link
+                            key={row.id}
+                            href={row.clients ? `/clients/${row.clients.id}` : "/agenda"}
+                            className={clsx(
+                              "rounded-xl border-l-4 p-2 transition-shadow hover:shadow-md",
+                              missed
+                                ? "border-error bg-error-container/30"
+                                : "border-primary bg-primary/5",
+                            )}
+                          >
+                            <p
+                              className={clsx(
+                                "flex items-center gap-1 text-[10px] font-bold tracking-wide uppercase",
+                                missed ? "text-error" : "text-primary",
+                              )}
+                            >
+                              <span className="material-symbols-outlined text-xs">
+                                {ACTIVITY_ICONS[row.type] ?? "event"}
+                              </span>
+                              {activityTypeLabel(row.type)}
+                            </p>
+                            <p className="mt-0.5 truncate text-body-md font-bold">{clientName(row)}</p>
+                            <p className="text-label-sm text-on-surface-variant">
+                              {formatTimeAr(row.scheduled_at)} hs
+                            </p>
+                            {row.objective ? (
+                              <p className="mt-0.5 line-clamp-2 text-label-sm text-on-surface-variant">
+                                {row.objective}
+                              </p>
+                            ) : null}
+                          </Link>
+                        );
+                      })}
+                      {dayRows.length === 0 ? (
+                        <p className="mt-4 text-center text-label-sm text-on-surface-variant/50">Libre</p>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Panel lateral */}
+        <aside className="space-y-6">
+          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-headline-sm font-bold">Tareas del dia</h2>
+              <span className="rounded-full bg-primary-fixed px-3 py-1 text-label-sm font-bold text-primary">
+                {todayRows.length} pendientes
+              </span>
+            </div>
+            {todayRows.length === 0 ? (
+              <p className="text-body-md text-on-surface-variant">Nada agendado para hoy.</p>
+            ) : (
+              <ul className="space-y-3">
+                {todayRows.map((row) => (
+                  <li key={row.id}>
+                    <Link
+                      href={row.clients ? `/clients/${row.clients.id}` : "/agenda"}
+                      className="group flex items-start gap-3"
+                    >
+                      <span className="material-symbols-outlined mt-0.5 text-outline transition-colors group-hover:text-primary">
+                        radio_button_unchecked
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-bold group-hover:underline">{clientName(row)}</p>
+                        <p className="text-label-sm text-on-surface-variant">
+                          {activityTypeLabel(row.type)} - Hoy, {formatTimeAr(row.scheduled_at)}
+                        </p>
+                        {row.objective ? (
+                          <p className="truncate text-label-sm text-on-surface-variant">{row.objective}</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+            <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
+              <span className="material-symbols-outlined text-error">warning</span>
+              Vencidos
+            </h2>
+            {overdue.length === 0 ? (
+              <p className="text-body-md text-on-surface-variant">
+                Sin seguimientos vencidos. Buen trabajo.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {overdue.map((row) => {
+                  const client = row.clients;
+                  const whatsappDigits = client?.phone_normalized.replace(/\D+/g, "") ?? "";
+
+                  return (
+                    <li key={row.id} className="rounded-2xl border border-error/30 bg-error-container/20 p-4">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="rounded-full bg-error-container px-2 py-0.5 text-[10px] font-bold tracking-wide text-on-error-container uppercase">
+                          {activityTypeLabel(row.type)} vencida
+                        </span>
+                        <span className="text-label-sm font-bold text-error">
+                          {formatRelativeAr(row.scheduled_at)}
+                        </span>
+                      </div>
+                      {client ? (
+                        <Link href={`/clients/${client.id}`} className="block font-bold hover:underline">
+                          {clientName(row)}
+                        </Link>
+                      ) : (
+                        <p className="font-bold">{clientName(row)}</p>
+                      )}
+                      <p className="text-label-sm text-on-surface-variant">
+                        {row.objective ?? `Agendado para el ${formatDateAr(row.scheduled_at)}`}
+                      </p>
+                      {whatsappDigits ? (
+                        <a
+                          href={`https://wa.me/${whatsappDigits}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-error py-2 text-label-md font-bold text-white transition-all hover:bg-error/90 active:scale-[0.99]"
+                        >
+                          <span className="material-symbols-outlined text-base">chat</span>
+                          Contactar ahora
+                        </a>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
+    </AppShell>
+  );
+}
