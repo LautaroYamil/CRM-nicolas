@@ -67,6 +67,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
 
+  // PostgREST usa comas y parentesis como sintaxis en .or(): se quitan del texto buscado
+  const search = (params.search ?? "").replace(/[,()"'\\]/g, " ").trim();
+
   let query = supabase
     .from("clients")
     .select(
@@ -81,9 +84,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     query = query.eq("status", params.status);
   }
 
-  if (params.search) {
+  if (search) {
     query = query.or(
-      `first_name.ilike.%${params.search}%,last_name.ilike.%${params.search}%,phone_normalized.ilike.%${params.search}%`,
+      `first_name.ilike.%${search}%,last_name.ilike.%${search}%,phone_normalized.ilike.%${search}%`,
     );
   }
 
@@ -142,7 +145,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const hasNext = showingTo < total;
   const nowIso = new Date().toISOString();
 
-  const baseParams = { search: params.search, seller: params.seller };
+  const baseParams = { search: search || undefined, seller: params.seller };
 
   return (
     <AppShell profile={profile} title="Clientes">
@@ -164,7 +167,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
             <input
               type="text"
               name="search"
-              defaultValue={params.search ?? ""}
+              defaultValue={search}
               placeholder="Buscar por nombre o telefono..."
               className="w-full rounded-full border-none bg-surface-container-low py-2.5 pr-4 pl-10 text-body-md focus:ring-2 focus:ring-primary/20"
             />

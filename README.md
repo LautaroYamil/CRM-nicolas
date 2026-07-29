@@ -14,6 +14,7 @@ Base inicial del MVP CRM enfocada en seguimiento comercial para que ningun vende
 - Etapa 3: historial de actividad (tabla `activities` + historial de cambios de estado), ficha de cliente con linea de tiempo
 - Etapa 4: agenda semanal, programar, completar, reprogramar y cancelar seguimientos, dashboard accionable
 - Etapa 5: plantillas de WhatsApp (abren el chat con texto precargado, nunca envian solas) y acciones rapidas desde la agenda
+- Etapa 6: reportes (KPIs, actividad por vendedor, clientes por interes), trigger automatico de perfiles, sanitizado de busqueda
 - Rediseno visual completo con Tailwind 4 a partir de disenos de Stitch (`docs/designs/`)
 
 Documentacion:
@@ -35,6 +36,9 @@ Documentacion:
 
 Ejecutar migraciones de `supabase/migrations` en tu proyecto Supabase.
 
-## Proximas etapas
+## Posibles mejoras futuras
 
-- Etapa 6: reportes, trigger automatico de perfiles, sanitizado de busqueda y hardening general
+- Archivar clientes desde la interfaz (la columna `archived_at` ya existe)
+- Recupero de contrasena por email (Supabase Auth lo soporta)
+- Registro de compras con monto para reportes de facturacion
+- Vista mensual de la agenda
