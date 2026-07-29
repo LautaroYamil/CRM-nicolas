@@ -114,7 +114,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
   const week = argWeekDays(weekOffset);
   const weekStartIso = week[0].startIso;
   const weekEndIso = week[week.length - 1].endIso;
-  const { startIso: todayStartIso, endIso: todayEndIso } = argTodayRange();
+  const { endIso: todayEndIso } = argTodayRange();
   const nowIso = new Date().toISOString();
 
   const baseSelect =
@@ -133,7 +133,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
     .from("activities")
     .select(baseSelect)
     .eq("status", "pendiente")
-    .lt("scheduled_at", todayStartIso)
+    .lt("scheduled_at", nowIso)
     .order("scheduled_at", { ascending: true })
     .limit(30);
 
@@ -170,8 +170,9 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
     rowsByDay.set(day, existing);
   }
 
+  // "Tareas del dia" = lo que queda por hacer hoy; lo de hoy que ya paso de hora va a "Vencidos"
   const todayRows = (weekRows ?? []).filter(
-    (row) => row.scheduled_at >= todayStartIso && row.scheduled_at < todayEndIso,
+    (row) => row.scheduled_at >= nowIso && row.scheduled_at < todayEndIso,
   );
   const overdue = overdueRows ?? [];
 
@@ -326,7 +327,9 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
               </span>
             </div>
             {todayRows.length === 0 ? (
-              <p className="text-body-md text-on-surface-variant">Nada agendado para hoy.</p>
+              <p className="text-body-md text-on-surface-variant">
+                No queda nada pendiente para hoy.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {todayRows.map((row) => (

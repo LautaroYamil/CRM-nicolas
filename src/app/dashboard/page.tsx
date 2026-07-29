@@ -48,13 +48,13 @@ export default async function DashboardPage() {
         .from("activities")
         .select("id", { count: "exact", head: true })
         .eq("status", "pendiente")
-        .gte("scheduled_at", startIso)
+        .gte("scheduled_at", nowIso)
         .lt("scheduled_at", endIso),
       supabase
         .from("activities")
         .select("id", { count: "exact", head: true })
         .eq("status", "pendiente")
-        .lt("scheduled_at", startIso),
+        .lt("scheduled_at", nowIso),
       supabase
         .from("clients")
         .select("id", { count: "exact", head: true })
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
 
   const kpis = [
     {
-      label: "Seguimientos hoy",
+      label: "Quedan hoy",
       value: todayRes.count ?? 0,
       icon: "event_available",
       href: "/agenda",
@@ -281,9 +281,8 @@ export default async function DashboardPage() {
                       .slice(0, 2)
                       .join("")
                       .toUpperCase();
-                    const overdue = row.scheduled_at < startIso;
-                    const isToday = !overdue && row.scheduled_at >= startIso;
-                    const missedToday = isToday && row.scheduled_at < nowIso;
+                    const overdue = row.scheduled_at < nowIso;
+                    const isToday = row.scheduled_at >= startIso;
 
                     return (
                       <tr key={row.id} className="group bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30">
@@ -310,7 +309,7 @@ export default async function DashboardPage() {
                             overdue ? "text-error" : "text-primary",
                           )}
                         >
-                          {overdue ? formatDateTimeAr(row.scheduled_at) : `Hoy, ${formatTimeAr(row.scheduled_at)}`}
+                          {isToday ? `Hoy, ${formatTimeAr(row.scheduled_at)}` : formatDateTimeAr(row.scheduled_at)}
                         </td>
                         <td className="max-w-56 truncate border-y border-outline-variant/30 px-4 py-3 text-body-md text-on-surface-variant">
                           {row.objective ?? "-"}
@@ -323,11 +322,11 @@ export default async function DashboardPage() {
                         <td className="border-y border-outline-variant/30 px-4 py-3">
                           {overdue ? (
                             <span className="flex items-center gap-1.5 text-xs font-medium text-error">
-                              <span className="h-2 w-2 rounded-full bg-error" /> Vencido
+                              <span className="h-2 w-2 animate-pulse rounded-full bg-error" /> Vencido
                             </span>
                           ) : (
                             <span className="flex items-center gap-1.5 text-xs font-medium text-orange-600">
-                              <span className={clsx("h-2 w-2 rounded-full bg-orange-600", missedToday && "animate-pulse")} />
+                              <span className="h-2 w-2 rounded-full bg-orange-600" />
                               Pendiente
                             </span>
                           )}

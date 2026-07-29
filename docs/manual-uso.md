@@ -59,7 +59,7 @@ El catálogo de rubros que los vendedores pueden marcar (living, colchones, come
 
 Un seguimiento es una acción con cliente, tipo (llamada, WhatsApp, visita...), fecha y objetivo. Vive en uno de estos estados:
 
-- **Pendiente**: está en la agenda, hay que hacerlo. Si la fecha pasó, aparece como **vencido** (rojo).
+- **Pendiente**: está en la agenda, hay que hacerlo. Si la fecha y hora ya pasaron y sigue pendiente, aparece como **vencido** (rojo) en todas las pantallas.
 - **Realizada**: se hizo; el resultado que escribiste pasa al historial del cliente.
 - **Cancelada**: ya no tiene sentido hacerla.
 
