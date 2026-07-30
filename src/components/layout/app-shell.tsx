@@ -34,11 +34,14 @@ export function AppShell({ profile, title, children }: AppShellProps) {
       {/* Sidebar (desktop) */}
       <aside className="fixed top-0 left-0 z-50 hidden h-full w-[260px] flex-col border-r border-white/5 bg-gradient-to-b from-[#141927] via-[#161b2a] to-[#1b2236] py-6 shadow-2xl lg:flex">
         <div className="mb-8 px-6">
-          <h1 className="text-[24px] leading-tight font-black tracking-tight text-white">
-            El Gallego<span className="text-amber-400">.</span>
+          <h1 className="text-[24px] leading-tight tracking-tight">
+            <span className="font-light text-white/75">El </span>
+            <span className="bg-gradient-to-r from-white via-primary-fixed to-primary-fixed-dim bg-clip-text font-black text-transparent">
+              Gallego
+            </span>
           </h1>
           <div className="mt-1.5 flex items-center gap-2">
-            <span className="h-px w-7 bg-gradient-to-r from-amber-400/70 to-transparent" />
+            <span className="h-px w-7 bg-gradient-to-r from-primary-fixed-dim/70 to-transparent" />
             <p className="text-[10px] font-semibold tracking-[0.3em] text-white/40 uppercase">
               CRM Comercial
             </p>
