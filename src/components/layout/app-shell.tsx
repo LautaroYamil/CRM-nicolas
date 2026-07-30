@@ -42,35 +42,35 @@ export function AppShell({ profile, title, children }: AppShellProps) {
 
         <SidebarNavLinks items={navItems} />
 
-        <div className="mt-auto p-4">
-          <div className="mt-4 flex items-center gap-3 border-t border-outline-variant/30 px-4 py-6">
-            <Link
-              href="/profile"
-              title="Mi perfil"
-              className="flex flex-1 items-center gap-3 overflow-hidden transition-opacity hover:opacity-70"
+        <div className="mt-auto space-y-1 border-t border-outline-variant/30 p-3">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-surface-container"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container font-bold text-on-primary shadow-sm">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-on-surface">
+                {profile.full_name ?? "Sin nombre"}
+              </p>
+              <p className="text-[10px] tracking-wider text-on-surface-variant uppercase">
+                {profile.role === "admin" ? "Administrador" : "Vendedor"}
+              </p>
+            </div>
+            <span className="material-symbols-outlined shrink-0 text-on-surface-variant/60">
+              chevron_right
+            </span>
+          </Link>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-3 rounded-lg p-2 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-error-container/30 hover:text-error"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container font-bold text-on-primary shadow-sm">
-                {initials}
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="truncate text-sm font-bold text-on-surface">
-                  {profile.full_name ?? "Sin nombre"}
-                </p>
-                <p className="text-[10px] tracking-wider text-on-surface-variant uppercase">
-                  {profile.role === "admin" ? "Administrador" : "Vendedor"}
-                </p>
-              </div>
-            </Link>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                title="Cerrar sesion"
-                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
-              >
-                logout
-              </button>
-            </form>
-          </div>
+              <span className="material-symbols-outlined ml-1 text-[20px]">logout</span>
+              Cerrar sesion
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -102,21 +102,21 @@ export function AppShell({ profile, title, children }: AppShellProps) {
               <span className="material-symbols-outlined text-[20px]">person_add</span>
               <span className="hidden sm:inline">Nuevo cliente</span>
             </Link>
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex items-center gap-1 lg:hidden">
               <Link
                 href="/profile"
                 title="Mi perfil"
-                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-primary"
+                className="flex items-center justify-center rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
               >
-                account_circle
+                <span className="material-symbols-outlined">account_circle</span>
               </Link>
               <form action={logoutAction}>
                 <button
                   type="submit"
                   title="Cerrar sesion"
-                  className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
+                  className="flex items-center justify-center rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-error-container/30 hover:text-error"
                 >
-                  logout
+                  <span className="material-symbols-outlined">logout</span>
                 </button>
               </form>
             </div>
