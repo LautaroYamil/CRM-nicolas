@@ -40,7 +40,7 @@ type ClientFormProps = {
 };
 
 const inputClasses =
-  "w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3.5 py-2.5 text-body-lg focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none";
+  "w-full rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3.5 py-2.5 text-sm focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none";
 
 const labelClasses = "mb-1.5 block text-label-md font-semibold";
 
@@ -81,7 +81,7 @@ export function ClientForm({
       ) : null}
 
       <form action={action} className="space-y-6">
-        <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm lg:p-6">
+        <section className="card-premium rounded-xl p-5 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
             <span className="material-symbols-outlined text-primary">person</span>
             Datos del cliente
@@ -117,7 +117,7 @@ export function ClientForm({
           </div>
         </section>
 
-        <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm lg:p-6">
+        <section className="card-premium rounded-xl p-5 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
             <span className="material-symbols-outlined text-primary">storefront</span>
             Situacion comercial
@@ -162,7 +162,7 @@ export function ClientForm({
                 {activeInterests.map((interest) => (
                   <label
                     key={interest.id}
-                    className="cursor-pointer rounded-full border border-outline-variant bg-surface-container-lowest px-4 py-2 text-label-md font-semibold text-on-surface-variant transition-colors select-none has-checked:border-primary has-checked:bg-primary-fixed has-checked:text-primary"
+                    className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-[11px] font-bold tracking-wider text-on-surface-variant uppercase transition-colors select-none has-checked:border-primary has-checked:bg-primary has-checked:text-on-primary"
                   >
                     <input
                       type="checkbox"
@@ -191,7 +191,7 @@ export function ClientForm({
         </section>
 
         {withFirstFollowUp ? (
-          <section className="rounded-3xl border border-primary/30 bg-primary/5 p-5 shadow-sm lg:p-6">
+          <section className="rounded-xl border border-primary/30 bg-primary/5 p-5 lg:p-6">
             <h2 className="mb-1 flex items-center gap-2 text-headline-sm font-bold">
               <span className="material-symbols-outlined text-primary">event_available</span>
               Primer seguimiento (opcional)
@@ -229,14 +229,14 @@ export function ClientForm({
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-label-md font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
+            className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
           >
-            <span className="material-symbols-outlined text-base">check</span>
+            <span className="material-symbols-outlined text-[18px]">check</span>
             {submitLabel}
           </button>
           <Link
             href={cancelHref}
-            className="rounded-xl border border-outline-variant bg-surface-container-lowest px-6 py-3 text-label-md font-semibold transition-colors hover:bg-surface-container"
+            className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-6 py-3 text-xs font-bold tracking-widest text-on-surface-variant uppercase transition-colors hover:bg-surface-container"
           >
             Cancelar
           </Link>

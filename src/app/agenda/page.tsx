@@ -199,7 +199,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                   <select
                     name="seller"
                     defaultValue={params.seller ?? ""}
-                    className="rounded-full border-none bg-surface-container-low px-4 py-2 text-body-md focus:ring-2 focus:ring-primary/20"
+                    className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
                   >
                     <option value="">Todos los vendedores</option>
                     {(sellerRows ?? []).map((seller) => (
@@ -210,7 +210,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                   </select>
                   <button
                     type="submit"
-                    className="rounded-full bg-surface-container px-4 py-2 text-label-md font-semibold transition-colors hover:bg-surface-container-high"
+                    className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors hover:bg-surface-container"
                   >
                     Filtrar
                   </button>
@@ -219,30 +219,30 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
               <Link
                 href={`/agenda?week=0${sellerParam}`}
                 className={clsx(
-                  "rounded-full border border-outline-variant px-4 py-2 text-label-md font-semibold transition-colors",
+                  "rounded-lg border px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
                   weekOffset === 0
-                    ? "bg-primary-fixed text-primary"
-                    : "bg-surface-container-lowest hover:bg-surface-container",
+                    ? "border-primary bg-primary text-on-primary"
+                    : "border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container",
                 )}
               >
                 Hoy
               </Link>
               <Link
                 href={`/agenda?week=${weekOffset - 1}${sellerParam}`}
-                className="flex items-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
               >
                 <span className="material-symbols-outlined text-base">chevron_left</span>
               </Link>
               <Link
                 href={`/agenda?week=${weekOffset + 1}${sellerParam}`}
-                className="flex items-center rounded-full border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
               >
                 <span className="material-symbols-outlined text-base">chevron_right</span>
               </Link>
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-3 shadow-sm">
+          <div className="card-premium overflow-x-auto rounded-xl p-3">
             <div className="grid min-w-[720px] grid-cols-6 gap-2">
               {week.map((day) => {
                 const dayRows = rowsByDay.get(day.dateStr) ?? [];
@@ -251,19 +251,19 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                   <div key={day.dateStr} className="flex min-h-72 flex-col">
                     <div
                       className={clsx(
-                        "mb-2 rounded-xl px-2 py-2 text-center",
-                        day.isToday ? "bg-primary-fixed" : "bg-surface-container-low/60",
+                        "mb-2 rounded-lg px-2 py-2 text-center",
+                        day.isToday ? "bg-primary" : "bg-surface-container-low/60",
                       )}
                     >
                       <p
                         className={clsx(
                           "text-[10px] font-bold tracking-wider uppercase",
-                          day.isToday ? "text-primary" : "text-on-surface-variant",
+                          day.isToday ? "text-on-primary/80" : "text-on-surface-variant",
                         )}
                       >
                         {day.weekdayLabel}
                       </p>
-                      <p className={clsx("text-body-lg font-bold", day.isToday && "text-primary")}>
+                      <p className={clsx("text-body-lg font-bold", day.isToday && "text-on-primary")}>
                         {day.dayNumber}
                       </p>
                     </div>
@@ -319,10 +319,10 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
 
         {/* Panel lateral */}
         <aside className="space-y-6">
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-headline-sm font-bold">Tareas del dia</h2>
-              <span className="rounded-full bg-primary-fixed px-3 py-1 text-label-sm font-bold text-primary">
+              <span className="rounded border border-outline-variant/40 bg-surface-container px-2 py-1 text-[10px] font-bold tracking-wider text-on-surface uppercase">
                 {todayRows.length} pendientes
               </span>
             </div>
@@ -372,7 +372,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
             )}
           </section>
 
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
               <span className="material-symbols-outlined text-error">warning</span>
               Vencidos

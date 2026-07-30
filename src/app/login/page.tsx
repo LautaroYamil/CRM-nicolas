@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="grid min-h-dvh place-items-center bg-surface-container p-4">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-3xl bg-surface-container-lowest shadow-xl md:grid-cols-2">
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-xl md:grid-cols-2">
         {/* Panel de marca */}
         <section className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-on-primary md:flex">
           <div>
@@ -89,7 +89,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   required
                   autoComplete="email"
                   placeholder="nombre@correo.com"
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-3 pr-4 pl-11 text-body-lg focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="w-full rounded-lg border border-outline-variant/40 bg-surface-container-lowest py-3 pr-4 pl-11 text-sm focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none"
                 />
               </div>
             </label>
@@ -106,14 +106,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   required
                   autoComplete="current-password"
                   placeholder="Tu contrasena"
-                  className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest py-3 pr-4 pl-11 text-body-lg focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="w-full rounded-lg border border-outline-variant/40 bg-surface-container-lowest py-3 pr-4 pl-11 text-sm focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none"
                 />
               </div>
             </label>
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-label-md font-bold tracking-wider text-on-primary uppercase shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 active:scale-[0.99]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.99]"
             >
               Iniciar sesion
               <span className="material-symbols-outlined text-base">arrow_forward</span>

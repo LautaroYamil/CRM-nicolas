@@ -40,12 +40,12 @@ type ClientsPageProps = {
 };
 
 const STATUS_CHIP_CLASSES: Record<string, string> = {
-  nuevo: "bg-primary-fixed text-primary",
-  interesado: "bg-yellow-100 text-yellow-800",
-  en_seguimiento: "bg-orange-100 text-orange-700",
-  compro: "bg-green-100 text-green-700",
-  no_interesado: "bg-error-container/60 text-on-error-container",
-  inactivo: "bg-surface-container-high text-on-surface-variant",
+  nuevo: "border-outline-variant/40 bg-surface-container text-on-surface",
+  interesado: "border-yellow-600/20 bg-yellow-50 text-yellow-800",
+  en_seguimiento: "border-orange-600/20 bg-orange-50 text-orange-700",
+  compro: "border-green-600/20 bg-green-50 text-green-700",
+  no_interesado: "border-error/20 bg-error-container/20 text-error",
+  inactivo: "border-outline-variant/40 bg-surface-container-high text-on-surface-variant",
 };
 
 function buildQuery(params: Record<string, string | undefined>) {
@@ -149,115 +149,116 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
 
   return (
     <AppShell profile={profile} title="Clientes">
-      <section className="mb-6">
-        <h1 className="text-headline-md font-bold lg:text-headline-lg">Directorio de clientes</h1>
-        <p className="text-body-lg text-on-surface-variant">
-          Gestiona y segmenta tu cartera de clientes.
-        </p>
-      </section>
+      <div className="space-y-8">
+        <section>
+          <h1 className="text-headline-md font-bold tracking-tight lg:text-headline-xl">
+            Directorio de Clientes
+          </h1>
+          <p className="mt-1 font-medium text-on-surface-variant">
+            Gestiona y segmenta tu cartera de clientes.
+          </p>
+        </section>
 
-      <div className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm lg:p-6">
         {/* Busqueda y filtros */}
-        <form method="get" className="mb-4 flex flex-wrap items-center gap-3">
-          {params.status ? <input type="hidden" name="status" value={params.status} /> : null}
-          <div className="relative min-w-52 flex-1">
-            <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-outline">
-              search
-            </span>
-            <input
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder="Buscar por nombre o telefono..."
-              className="w-full rounded-full border-none bg-surface-container-low py-2.5 pr-4 pl-10 text-body-md focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-          {profile.role === "admin" ? (
-            <select
-              name="seller"
-              defaultValue={params.seller ?? ""}
-              className="rounded-full border-none bg-surface-container-low px-4 py-2.5 text-body-md focus:ring-2 focus:ring-primary/20"
+        <section className="space-y-4">
+          <form method="get" className="flex flex-wrap items-center gap-3">
+            {params.status ? <input type="hidden" name="status" value={params.status} /> : null}
+            <div className="relative min-w-52 flex-1">
+              <span className="material-symbols-outlined absolute top-1/2 left-4 -translate-y-1/2 text-on-surface-variant/60">
+                search
+              </span>
+              <input
+                type="text"
+                name="search"
+                defaultValue={search}
+                placeholder="Buscar por nombre o telefono..."
+                className="w-full rounded-lg border border-outline-variant/40 bg-surface-container-lowest py-2.5 pr-4 pl-11 text-sm transition-all focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none"
+              />
+            </div>
+            {profile.role === "admin" ? (
+              <select
+                name="seller"
+                defaultValue={params.seller ?? ""}
+                className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+              >
+                <option value="">Todos los vendedores</option>
+                {(sellerRows ?? []).map((seller) => (
+                  <option key={seller.id} value={seller.id}>
+                    {seller.full_name ?? seller.id}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-6 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
             >
-              <option value="">Todos los vendedores</option>
-              {(sellerRows ?? []).map((seller) => (
-                <option key={seller.id} value={seller.id}>
-                  {seller.full_name ?? seller.id}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          <button
-            type="submit"
-            className="rounded-full bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
-          >
-            Buscar
-          </button>
-        </form>
+              Buscar
+            </button>
+          </form>
 
-        {/* Chips de estado */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <Link
-            href={`/clients${buildQuery(baseParams)}`}
-            className={clsx(
-              "rounded-full px-4 py-2 text-label-md font-semibold transition-colors",
-              !params.status
-                ? "bg-primary-fixed text-primary"
-                : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
-            )}
-          >
-            Todos ({totalClients})
-          </Link>
-          {CLIENT_STATUS_OPTIONS.map((option) => (
+          <div className="flex flex-wrap items-center gap-2">
             <Link
-              key={option.value}
-              href={`/clients${buildQuery({ ...baseParams, status: option.value })}`}
+              href={`/clients${buildQuery(baseParams)}`}
               className={clsx(
-                "rounded-full px-4 py-2 text-label-md font-semibold transition-colors",
-                params.status === option.value
-                  ? "bg-primary-fixed text-primary"
-                  : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
+                "rounded-lg px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
+                !params.status
+                  ? "bg-primary text-on-primary"
+                  : "border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container",
               )}
             >
-              {option.label} ({statusCounts.get(option.value) ?? 0})
+              Todos ({totalClients})
             </Link>
-          ))}
-        </div>
+            {CLIENT_STATUS_OPTIONS.map((option) => (
+              <Link
+                key={option.value}
+                href={`/clients${buildQuery({ ...baseParams, status: option.value })}`}
+                className={clsx(
+                  "rounded-lg px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
+                  params.status === option.value
+                    ? "bg-primary text-on-primary"
+                    : "border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container",
+                )}
+              >
+                {option.label} ({statusCounts.get(option.value) ?? 0})
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* Tabla */}
         {(clients ?? []).length === 0 ? (
-          <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low/50 p-10 text-center">
-            <span className="material-symbols-outlined mb-2 text-4xl text-primary-container">person_search</span>
-            <p className="font-semibold">No hay clientes con estos filtros</p>
-            <p className="mb-4 text-body-md text-on-surface-variant">
+          <div className="card-premium rounded-xl p-10 text-center">
+            <span className="material-symbols-outlined mb-2 text-4xl text-on-surface-variant/40">
+              person_search
+            </span>
+            <p className="font-bold">No hay clientes con estos filtros</p>
+            <p className="mb-5 text-body-md text-on-surface-variant">
               Proba con otra busqueda o carga un cliente nuevo.
             </p>
             <Link
               href="/clients/new"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase"
             >
-              <span className="material-symbols-outlined text-base">person_add</span>
+              <span className="material-symbols-outlined text-[20px]">person_add</span>
               Nuevo cliente
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-separate border-spacing-y-2 text-left">
+          <div className="overflow-x-auto border-t border-outline-variant/30">
+            <table className="w-full min-w-[900px]">
               <thead>
-                <tr className="bg-surface-container-low/50">
-                  <th className="rounded-l-lg px-4 py-3 text-label-md font-semibold text-on-surface-variant">Cliente</th>
-                  <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Intereses</th>
-                  <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Ultimo contacto</th>
-                  <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Proximo seguimiento</th>
-                  <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Estado</th>
-                  {profile.role === "admin" ? (
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Vendedor</th>
-                  ) : null}
-                  <th className="rounded-r-lg px-4 py-3 text-center text-label-md font-semibold text-on-surface-variant">
-                    Acciones
-                  </th>
+                <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
+                  <th className="py-5 pr-4">Cliente</th>
+                  <th className="px-4 py-5">Intereses</th>
+                  <th className="px-4 py-5">Ultimo contacto</th>
+                  <th className="px-4 py-5">Proximo seguimiento</th>
+                  <th className="px-4 py-5">Estado</th>
+                  {profile.role === "admin" ? <th className="px-4 py-5">Vendedor</th> : null}
+                  <th className="py-5 pl-4 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-outline-variant/20">
                 {(clients ?? []).map((client) => {
                   const clientName = `${client.first_name} ${client.last_name ?? ""}`.trim();
                   const initials = clientName
@@ -271,76 +272,84 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
 
                   return (
-                    <tr key={client.id} className="bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30">
-                      <td className="rounded-l-xl border-y border-l border-outline-variant/30 px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-primary">
+                    <tr key={client.id} className="group transition-colors hover:bg-surface-container-low">
+                      <td className="py-5 pr-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary-container/10 font-bold text-primary">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <Link href={`/clients/${client.id}`} className="block truncate font-bold hover:underline">
+                            <Link
+                              href={`/clients/${client.id}`}
+                              className="block truncate font-bold text-on-surface transition-colors group-hover:text-primary hover:underline"
+                            >
                               {clientName}
                             </Link>
-                            <p className="truncate text-label-sm text-on-surface-variant">
+                            <p className="truncate text-xs text-on-surface-variant/70">
                               {client.phone_normalized}
                               {client.locality ? ` - ${client.locality}` : ""}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="max-w-48 border-y border-outline-variant/30 px-4 py-3 text-body-md text-on-surface-variant">
-                        <span className="block truncate">{interests.length > 0 ? interests.join(", ") : "-"}</span>
+                      <td className="max-w-48 px-4 py-5 text-sm text-on-surface-variant">
+                        <span className="block truncate">
+                          {interests.length > 0 ? interests.join(", ") : "-"}
+                        </span>
                       </td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3 text-body-md">
-                        {formatRelativeAr(client.last_contact_at)}
-                      </td>
+                      <td className="px-4 py-5 text-sm">{formatRelativeAr(client.last_contact_at)}</td>
                       <td
                         className={clsx(
-                          "border-y border-outline-variant/30 px-4 py-3 text-body-md font-semibold",
-                          followUpOverdue ? "text-error" : client.next_follow_up_at ? "text-primary" : "text-on-surface-variant",
+                          "px-4 py-5 text-sm font-bold",
+                          followUpOverdue
+                            ? "text-error"
+                            : client.next_follow_up_at
+                              ? "text-on-surface"
+                              : "font-normal text-on-surface-variant/60",
                         )}
                       >
                         {formatDateTimeAr(client.next_follow_up_at)}
                       </td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3">
+                      <td className="px-4 py-5">
                         <span
                           className={clsx(
-                            "inline-block rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap",
-                            STATUS_CHIP_CLASSES[client.status] ?? "bg-surface-container text-on-surface-variant",
+                            "inline-block rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
+                            STATUS_CHIP_CLASSES[client.status] ??
+                              "border-outline-variant/40 bg-surface-container text-on-surface-variant",
                           )}
                         >
                           {clientStatusLabel(client.status)}
                         </span>
                       </td>
                       {profile.role === "admin" ? (
-                        <td className="border-y border-outline-variant/30 px-4 py-3 text-body-md">
+                        <td className="px-4 py-5 text-sm font-semibold">
                           {sellersById.get(client.assigned_user_id) ?? "-"}
                         </td>
                       ) : null}
-                      <td className="rounded-r-xl border-y border-r border-outline-variant/30 px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="py-5 pl-4 text-right">
+                        <div className="flex justify-end gap-3 opacity-60 transition-opacity group-hover:opacity-100">
                           <a
                             href={`https://wa.me/${client.phone_normalized.replace(/\D+/g, "")}`}
                             target="_blank"
                             rel="noreferrer"
                             title="Abrir WhatsApp"
-                            className="rounded-full bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
+                            className="p-2 transition-colors hover:text-green-700"
                           >
-                            <span className="material-symbols-outlined text-base">chat</span>
+                            <span className="material-symbols-outlined">send</span>
                           </a>
                           <Link
                             href={`/clients/${client.id}`}
                             title="Ver ficha"
-                            className="rounded-full bg-surface-container p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                            className="p-2 transition-colors hover:text-primary"
                           >
-                            <span className="material-symbols-outlined text-base">open_in_new</span>
+                            <span className="material-symbols-outlined">visibility</span>
                           </Link>
                           <Link
                             href={`/clients/${client.id}/edit`}
                             title="Editar"
-                            className="rounded-full bg-surface-container p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                            className="p-2 transition-colors hover:text-primary"
                           >
-                            <span className="material-symbols-outlined text-base">edit</span>
+                            <span className="material-symbols-outlined">edit</span>
                           </Link>
                         </div>
                       </td>
@@ -354,27 +363,30 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
 
         {/* Paginacion */}
         {total > 0 ? (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container-low/50 px-4 py-3">
-            <p className="text-body-md text-on-surface-variant">
-              Mostrando <span className="font-bold text-on-surface">{showingFrom} - {showingTo}</span> de{" "}
-              <span className="font-bold text-on-surface">{total}</span> clientes
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
+            <p className="text-sm text-on-surface-variant">
+              Mostrando{" "}
+              <span className="font-bold text-on-surface">
+                {showingFrom} - {showingTo}
+              </span>{" "}
+              de <span className="font-bold text-on-surface">{total}</span> clientes
             </p>
             <div className="flex items-center gap-2">
               {hasPrev ? (
                 <Link
                   href={`/clients${buildQuery({ ...baseParams, status: params.status, page: String(page - 1) })}`}
-                  className="flex items-center rounded-lg border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                  className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
                 >
                   <span className="material-symbols-outlined text-base">chevron_left</span>
                 </Link>
               ) : null}
-              <span className="rounded-lg bg-primary px-3.5 py-1.5 text-label-md font-bold text-on-primary">
+              <span className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-bold text-on-primary">
                 {page}
               </span>
               {hasNext ? (
                 <Link
                   href={`/clients${buildQuery({ ...baseParams, status: params.status, page: String(page + 1) })}`}
-                  className="flex items-center rounded-lg border border-outline-variant bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                  className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
                 >
                   <span className="material-symbols-outlined text-base">chevron_right</span>
                 </Link>

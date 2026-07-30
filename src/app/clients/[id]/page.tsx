@@ -34,12 +34,12 @@ const ACTIVITY_ICONS: Record<string, string> = {
 };
 
 const STATUS_CHIP_CLASSES: Record<string, string> = {
-  nuevo: "bg-primary-fixed text-primary",
-  interesado: "bg-yellow-100 text-yellow-800",
-  en_seguimiento: "bg-orange-100 text-orange-700",
-  compro: "bg-green-100 text-green-700",
-  no_interesado: "bg-error-container/60 text-on-error-container",
-  inactivo: "bg-surface-container-high text-on-surface-variant",
+  nuevo: "border-outline-variant/40 bg-surface-container text-on-surface",
+  interesado: "border-yellow-600/20 bg-yellow-50 text-yellow-800",
+  en_seguimiento: "border-orange-600/20 bg-orange-50 text-orange-700",
+  compro: "border-green-600/20 bg-green-50 text-green-700",
+  no_interesado: "border-error/20 bg-error-container/20 text-error",
+  inactivo: "border-outline-variant/40 bg-surface-container-high text-on-surface-variant",
 };
 
 type ClientDetailRow = {
@@ -174,10 +174,10 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       ) : null}
 
       {/* Header */}
-      <section className="mb-6 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm lg:p-6">
+      <section className="mb-6 card-premium rounded-xl p-5 lg:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-fixed text-headline-sm font-black text-primary">
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary-container/10 text-headline-sm font-black text-primary">
               {initials}
             </div>
             <div>
@@ -204,29 +204,29 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
               href={`https://wa.me/${whatsappDigits}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 rounded-full bg-green-600 px-5 py-2.5 text-label-md font-bold text-white shadow-lg shadow-green-600/20 transition-all hover:bg-green-700 active:scale-95"
+              className="flex items-center gap-2 rounded-lg bg-green-700 px-5 py-2.5 text-xs font-bold tracking-widest text-white uppercase shadow-sm transition-all hover:bg-green-800 active:scale-[0.98]"
             >
-              <span className="material-symbols-outlined text-base">chat</span>
+              <span className="material-symbols-outlined text-[18px]">chat</span>
               WhatsApp
             </a>
             <a
               href={`tel:${client.phone_normalized}`}
               title="Llamar"
-              className="rounded-full border border-outline-variant bg-surface-container-lowest p-2.5 transition-colors hover:bg-surface-container"
+              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2.5 transition-colors hover:bg-surface-container"
             >
               <span className="material-symbols-outlined text-base">call</span>
             </a>
             <a
               href="#programar"
-              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-label-md font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
+              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
             >
-              <span className="material-symbols-outlined text-base">event_available</span>
+              <span className="material-symbols-outlined text-[18px]">event_available</span>
               Nuevo seguimiento
             </a>
             <Link
               href={`/clients/${client.id}/edit`}
               title="Editar cliente"
-              className="rounded-full border border-outline-variant bg-surface-container-lowest p-2.5 transition-colors hover:bg-surface-container"
+              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2.5 transition-colors hover:bg-surface-container"
             >
               <span className="material-symbols-outlined text-base">edit</span>
             </Link>
@@ -259,7 +259,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
       <div className="grid gap-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_320px]">
         {/* Columna izquierda: datos */}
         <aside className="space-y-6">
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
               Contacto
             </h2>
@@ -283,7 +283,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             </ul>
           </section>
 
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
               Intereses
             </h2>
@@ -299,7 +299,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 {interests.map((interest) => (
                   <span
                     key={interest}
-                    className="rounded-full bg-primary-fixed px-3 py-1 text-label-sm font-bold text-primary"
+                    className="rounded border border-outline-variant/40 bg-surface-container px-2.5 py-1 text-[10px] font-bold tracking-wider text-on-surface uppercase"
                   >
                     {interest}
                   </span>
@@ -309,7 +309,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           </section>
 
           {client.notes ? (
-            <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+            <section className="card-premium rounded-xl p-5">
               <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
                 Notas
               </h2>
@@ -320,7 +320,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
 
         {/* Columna central: registrar + historial */}
         <div className="space-y-6">
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-1 text-headline-sm font-bold">Registrar contacto</h2>
             <p className="mb-4 text-body-md text-on-surface-variant">
               Ya hablaste con {client.first_name}? Deja registro y programa el proximo paso.
@@ -374,7 +374,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             </form>
           </section>
 
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <details>
               <summary className="flex cursor-pointer items-center gap-2 text-headline-sm font-bold">
                 <span className="material-symbols-outlined text-green-600">chat</span>
@@ -415,7 +415,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             </details>
           </section>
 
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-4 text-headline-sm font-bold">Historial de actividad</h2>
             {timeline.length === 0 ? (
               <p className="text-body-md text-on-surface-variant">Todavia no hay actividad registrada.</p>
@@ -454,7 +454,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
 
         {/* Columna derecha: pendientes + programar */}
         <aside className="space-y-6 lg:col-span-2 xl:col-span-1">
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+          <section className="card-premium rounded-xl p-5">
             <h2 className="mb-4 text-headline-sm font-bold">
               Pendientes ({pendingActivities.length})
             </h2>
@@ -564,7 +564,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
 
           <section
             id="programar"
-            className="scroll-mt-24 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm"
+            className="scroll-mt-24 card-premium rounded-xl p-5"
           >
             <h2 className="mb-1 text-headline-sm font-bold">Programar seguimiento</h2>
             <p className="mb-4 text-body-md text-on-surface-variant">

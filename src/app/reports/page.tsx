@@ -129,10 +129,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
               key={option.days}
               href={`/reports?days=${option.days}`}
               className={clsx(
-                "rounded-full px-4 py-2 text-label-md font-semibold transition-colors",
+                "rounded-lg px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
                 days === option.days
-                  ? "bg-primary-fixed text-primary"
-                  : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
+                  ? "bg-primary text-on-primary"
+                  : "border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container",
               )}
             >
               {option.label}
@@ -146,52 +146,46 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           {kpis.map((kpi) => (
             <div
               key={kpi.label}
-              className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm lg:p-5"
+              className="card-premium flex h-36 flex-col justify-between rounded-xl p-5 lg:h-40 lg:p-6"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <span className="material-symbols-outlined">{kpi.icon}</span>
-              </span>
-              <span className="mt-3 text-3xl font-black tracking-tight">{kpi.value}</span>
-              <p className="mt-0.5 text-label-sm font-semibold tracking-wide text-on-surface-variant uppercase">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">
                 {kpi.label}
               </p>
+              <div>
+                <p className="text-5xl font-light text-on-surface">{kpi.value}</p>
+                <div className="indicator-accent bg-primary" />
+              </div>
+              <span className="material-symbols-outlined absolute top-4 right-4 text-4xl text-primary opacity-10">
+                {kpi.icon}
+              </span>
             </div>
           ))}
         </div>
 
         {profile.role === "admin" && perSeller.length > 0 ? (
-          <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm lg:p-6">
+          <section className="card-premium rounded-xl p-5 lg:p-8">
             <h2 className="mb-4 text-headline-sm font-bold">Por vendedor</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full border-separate border-spacing-y-2 text-left">
+            <div className="overflow-x-auto border-t border-outline-variant/30">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-surface-container-low/50">
-                    <th className="rounded-l-lg px-4 py-3 text-label-md font-semibold text-on-surface-variant">Vendedor</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Clientes nuevos</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Contactos</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Ventas</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Pendientes</th>
-                    <th className="rounded-r-lg px-4 py-3 text-label-md font-semibold text-on-surface-variant">Vencidos</th>
+                  <tr className="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
+                    <th className="py-4 pr-4">Vendedor</th>
+                    <th className="px-4 py-4">Clientes nuevos</th>
+                    <th className="px-4 py-4">Contactos</th>
+                    <th className="px-4 py-4">Ventas</th>
+                    <th className="px-4 py-4">Pendientes</th>
+                    <th className="px-4 py-4">Vencidos</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-outline-variant/20">
                   {perSeller.map((row) => (
-                    <tr key={row.name} className="bg-surface-container-lowest">
-                      <td className="rounded-l-xl border-y border-l border-outline-variant/30 px-4 py-3 font-bold">
-                        {row.name}
-                      </td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3">{row.newClients}</td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3">{row.done}</td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3 font-bold text-green-700">
-                        {row.sales}
-                      </td>
-                      <td className="border-y border-outline-variant/30 px-4 py-3">{row.pending}</td>
-                      <td
-                        className={clsx(
-                          "rounded-r-xl border-y border-r border-outline-variant/30 px-4 py-3",
-                          row.overdue > 0 && "font-bold text-error",
-                        )}
-                      >
+                    <tr key={row.name} className="transition-colors hover:bg-surface-container-low">
+                      <td className="py-4 pr-4 font-bold">{row.name}</td>
+                      <td className="px-4 py-4 text-sm">{row.newClients}</td>
+                      <td className="px-4 py-4 text-sm">{row.done}</td>
+                      <td className="px-4 py-4 text-sm font-bold text-green-700">{row.sales}</td>
+                      <td className="px-4 py-4 text-sm">{row.pending}</td>
+                      <td className={clsx("px-4 py-4 text-sm", row.overdue > 0 && "font-bold text-error")}>
                         {row.overdue}
                       </td>
                     </tr>
@@ -205,7 +199,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           </section>
         ) : null}
 
-        <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm lg:p-6">
+        <section className="card-premium rounded-xl p-5 lg:p-8">
           <h2 className="mb-1 text-headline-sm font-bold">Clientes por interes</h2>
           <p className="mb-4 text-body-md text-on-surface-variant">
             Que busca tu cartera completa. Util para decidir promos y reposicion.

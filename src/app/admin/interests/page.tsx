@@ -61,24 +61,24 @@ export default async function InterestsAdminPage({ searchParams }: InterestsPage
 
         <form
           action={createInterestAction}
-          className="mb-6 flex flex-wrap items-center gap-3 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm"
+          className="card-premium mb-6 flex flex-wrap items-center gap-3 rounded-xl p-4"
         >
           <input
             name="name"
             required
             placeholder="Ej: Sillones, Colchones, Comedor..."
-            className="min-w-52 flex-1 rounded-xl border border-outline-variant bg-surface-container-lowest px-3.5 py-2.5 text-body-lg focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+            className="min-w-52 flex-1 rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3.5 py-2.5 text-sm focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none"
           />
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-label-md font-bold text-on-primary transition-all hover:bg-primary/90 active:scale-95"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
           >
-            <span className="material-symbols-outlined text-base">add</span>
+            <span className="material-symbols-outlined text-[18px]">add</span>
             Agregar
           </button>
         </form>
 
-        <section className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-sm">
+        <section className="card-premium rounded-xl p-5 lg:p-6">
           <h2 className="mb-4 text-headline-sm font-bold">Activos ({activeInterests.length})</h2>
           {activeInterests.length === 0 ? (
             <p className="text-body-md text-on-surface-variant">
@@ -137,7 +137,7 @@ function InterestRow({
   return (
     <li
       className={clsx(
-        "flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3",
+        "flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3",
         active
           ? "border-outline-variant/40 bg-surface-container-low/50"
           : "border-outline-variant/30 bg-surface-container-low/30 opacity-70",
@@ -146,8 +146,8 @@ function InterestRow({
       <div className="flex items-center gap-3">
         <span
           className={clsx(
-            "material-symbols-outlined rounded-full p-1.5",
-            active ? "bg-primary-fixed text-primary" : "bg-surface-container-high text-on-surface-variant",
+            "material-symbols-outlined rounded p-1.5",
+            active ? "bg-primary-container/10 text-primary" : "bg-surface-container-high text-on-surface-variant",
           )}
         >
           sell
@@ -168,10 +168,10 @@ function InterestRow({
         <button
           type="submit"
           className={clsx(
-            "rounded-xl px-4 py-2 text-label-md font-bold transition-colors",
+            "rounded-lg px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
             active
-              ? "border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
-              : "bg-primary text-on-primary hover:bg-primary/90",
+              ? "border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container"
+              : "bg-primary text-on-primary hover:bg-on-surface-variant",
           )}
         >
           {active ? "Desactivar" : "Reactivar"}
