@@ -10,7 +10,7 @@ Este es el circuito que el sistema le propone a cada vendedor todos los días. L
 
 ```mermaid
 flowchart TD
-    A[Vendedor entra al CRM] --> B{Dashboard:<br/>hay vencidos?}
+    A[Vendedor entra al CRM] --> B{Hay vencidos?}
     B -- Si --> C[Atacar vencidos primero:<br/>estan mas frios cada dia]
     B -- No --> D[Tareas de hoy<br/>en la Agenda]
     C --> E[Abrir ficha del cliente]
@@ -18,7 +18,7 @@ flowchart TD
     E --> F[Leer historial:<br/>que se hablo antes]
     F --> G[Contactar: WhatsApp con plantilla,<br/>llamada o visita]
     G --> H[Registrar resultado<br/>del contacto]
-    H --> I{Se concreto<br/>la venta?}
+    H --> I{Se concreto la venta?}
     I -- Si --> J[Estado: Compro<br/>+ agendar posventa]
     I -- No --> K[Agendar proximo<br/>seguimiento]
     J --> L[Siguiente tarea de la agenda]
@@ -151,13 +151,13 @@ flowchart LR
     B --> MW
     MW --> AUTH
     MW --> P
-    B -- "formularios" --> SA
-    P -- "leer datos<br/>(filtrados por RLS)" --> DB
-    SA -- "escribir datos<br/>(validados con Zod)" --> DB
+    B -->|formularios| SA
+    P -->|lectura filtrada por RLS| DB
+    SA -->|escritura validada con Zod| DB
     DB --> TR
 
     W["WhatsApp"]
-    B -. "el vendedor abre el chat<br/>con texto precargado;<br/>el envio siempre es manual" .-> W
+    B -.->|abre el chat con texto precargado - el envio es manual| W
 ```
 
 ---
