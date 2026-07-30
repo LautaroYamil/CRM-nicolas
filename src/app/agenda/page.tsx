@@ -188,61 +188,144 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         {/* Calendario semanal */}
         <div>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-headline-md font-bold capitalize lg:text-headline-lg">
-              {argMonthYearLabel(week[0].startIso)}
-            </h1>
-            <div className="flex items-center gap-2">
-              {profile.role === "admin" ? (
-                <form method="get" className="flex items-center gap-2">
-                  <input type="hidden" name="week" value={String(weekOffset)} />
-                  <select
-                    name="seller"
-                    defaultValue={params.seller ?? ""}
-                    className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
-                  >
-                    <option value="">Todos los vendedores</option>
-                    {(sellerRows ?? []).map((seller) => (
-                      <option key={seller.id} value={seller.id}>
-                        {seller.full_name ?? seller.id}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors hover:bg-surface-container"
-                  >
-                    Filtrar
-                  </button>
-                </form>
-              ) : null}
-              <Link
-                href={`/agenda?week=0${sellerParam}`}
-                className={clsx(
-                  "rounded-lg border px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
-                  weekOffset === 0
-                    ? "border-primary bg-primary text-on-primary"
-                    : "border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container",
-                )}
-              >
-                Hoy
-              </Link>
-              <Link
-                href={`/agenda?week=${weekOffset - 1}${sellerParam}`}
-                className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
-              >
-                <span className="material-symbols-outlined text-base">chevron_left</span>
-              </Link>
-              <Link
-                href={`/agenda?week=${weekOffset + 1}${sellerParam}`}
-                className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
-              >
-                <span className="material-symbols-outlined text-base">chevron_right</span>
-              </Link>
+          <div className="mb-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h1 className="text-headline-md font-bold capitalize lg:text-headline-lg">
+                {argMonthYearLabel(week[0].startIso)}
+              </h1>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/agenda?week=0${sellerParam}`}
+                  className={clsx(
+                    "rounded-lg border px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors",
+                    weekOffset === 0
+                      ? "border-primary bg-primary text-on-primary"
+                      : "border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container",
+                  )}
+                >
+                  Hoy
+                </Link>
+                <Link
+                  href={`/agenda?week=${weekOffset - 1}${sellerParam}`}
+                  className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_left</span>
+                </Link>
+                <Link
+                  href={`/agenda?week=${weekOffset + 1}${sellerParam}`}
+                  className="flex items-center rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-2 transition-colors hover:bg-surface-container"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_right</span>
+                </Link>
+              </div>
             </div>
+
+            {profile.role === "admin" ? (
+              <form method="get" className="flex flex-wrap items-center gap-2">
+                <input type="hidden" name="week" value={String(weekOffset)} />
+                <select
+                  name="seller"
+                  defaultValue={params.seller ?? ""}
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+                >
+                  <option value="">Todos los vendedores</option>
+                  {(sellerRows ?? []).map((seller) => (
+                    <option key={seller.id} value={seller.id}>
+                      {seller.full_name ?? seller.id}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2 text-[11px] font-bold tracking-wider uppercase transition-colors hover:bg-surface-container"
+                >
+                  Filtrar
+                </button>
+              </form>
+            ) : null}
           </div>
 
-          <div className="card-premium overflow-x-auto rounded-xl p-3">
+          {/* Vista mobile: lista vertical de dias, sin scroll horizontal */}
+          <div className="space-y-3 lg:hidden">
+            {week.map((day) => {
+              const dayRows = rowsByDay.get(day.dateStr) ?? [];
+
+              return (
+                <div
+                  key={day.dateStr}
+                  className={clsx("card-premium rounded-xl p-4", day.isToday && "border-primary")}
+                >
+                  <div className="mb-3 flex items-center gap-3">
+                    <span
+                      className={clsx(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold",
+                        day.isToday
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container-low text-on-surface-variant",
+                      )}
+                    >
+                      {day.dayNumber}
+                    </span>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">
+                        {day.weekdayLabel}
+                      </p>
+                      {day.isToday ? (
+                        <p className="text-[10px] font-bold text-primary uppercase">Hoy</p>
+                      ) : null}
+                    </div>
+                    <span className="ml-auto text-xs text-on-surface-variant">
+                      {dayRows.length === 0
+                        ? "Libre"
+                        : `${dayRows.length} ${dayRows.length === 1 ? "tarea" : "tareas"}`}
+                    </span>
+                  </div>
+                  {dayRows.length > 0 ? (
+                    <ul className="space-y-2">
+                      {dayRows.map((row) => {
+                        const missed = row.scheduled_at < nowIso;
+
+                        return (
+                          <li key={row.id}>
+                            <Link
+                              href={row.clients ? `/clients/${row.clients.id}` : "/agenda"}
+                              className={clsx(
+                                "block rounded-lg border-l-4 p-3",
+                                missed ? "border-error bg-error-container/20" : "border-primary bg-primary/5",
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p
+                                  className={clsx(
+                                    "flex items-center gap-1 text-[10px] font-bold tracking-wide uppercase",
+                                    missed ? "text-error" : "text-primary",
+                                  )}
+                                >
+                                  <span className="material-symbols-outlined text-xs">
+                                    {ACTIVITY_ICONS[row.type] ?? "event"}
+                                  </span>
+                                  {activityTypeLabel(row.type)}
+                                </p>
+                                <span className="text-xs font-bold text-on-surface-variant">
+                                  {formatTimeAr(row.scheduled_at)} hs
+                                </span>
+                              </div>
+                              <p className="mt-1 truncate font-bold">{clientName(row)}</p>
+                              {row.objective ? (
+                                <p className="truncate text-xs text-on-surface-variant">{row.objective}</p>
+                              ) : null}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="card-premium hidden overflow-x-auto rounded-xl p-3 lg:block">
             <div className="grid min-w-[720px] grid-cols-6 gap-2">
               {week.map((day) => {
                 const dayRows = rowsByDay.get(day.dateStr) ?? [];

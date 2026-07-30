@@ -199,7 +199,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href={`https://wa.me/${whatsappDigits}`}
               target="_blank"
@@ -376,10 +376,10 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
 
           <section className="card-premium rounded-xl p-5">
             <details>
-              <summary className="flex cursor-pointer items-center gap-2 text-headline-sm font-bold">
+              <summary className="flex flex-wrap cursor-pointer items-center gap-2 text-headline-sm font-bold">
                 <span className="material-symbols-outlined text-green-600">chat</span>
                 Plantillas de WhatsApp
-                <span className="ml-auto text-label-sm font-semibold text-on-surface-variant">
+                <span className="ml-auto hidden text-label-sm font-semibold text-on-surface-variant sm:inline">
                   Tocar para ver
                 </span>
               </summary>
