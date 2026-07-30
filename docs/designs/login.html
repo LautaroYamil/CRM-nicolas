@@ -3,557 +3,210 @@
 <html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Directorio de Clientes | Comercial CRM</title>
+<title>El Gallego CRM - Iniciar Sesión</title>
+<!-- Google Fonts: Hanken Grotesk -->
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "secondary": "#595e6f",
-                        "on-secondary-fixed-variant": "#414657",
-                        "surface-container-lowest": "#ffffff",
-                        "on-primary-fixed": "#001a42",
-                        "surface-tint": "#005ac2",
-                        "outline-variant": "#c2c6d6",
-                        "primary": "#0058be",
-                        "on-surface": "#181c1e",
-                        "on-secondary-container": "#5d6274",
-                        "surface-container": "#ebeef1",
-                        "primary-container": "#2170e4",
-                        "on-primary-fixed-variant": "#004395",
-                        "primary-fixed": "#d8e2ff",
-                        "tertiary": "#4648d4",
-                        "inverse-on-surface": "#eef1f4",
-                        "inverse-surface": "#2d3133",
-                        "on-error-container": "#93000a",
-                        "secondary-container": "#dbdff4",
-                        "on-tertiary-fixed": "#07006c",
-                        "on-primary": "#ffffff",
-                        "surface-variant": "#e0e3e6",
-                        "surface-bright": "#f7fafd",
-                        "primary-fixed-dim": "#adc6ff",
-                        "outline": "#727785",
-                        "surface-container-low": "#f1f4f7",
-                        "error": "#ba1a1a",
-                        "surface-container-highest": "#e0e3e6",
-                        "on-tertiary": "#ffffff",
-                        "on-secondary-fixed": "#161b2a",
-                        "on-background": "#181c1e",
-                        "background": "#f7fafd",
-                        "error-container": "#ffdad6",
-                        "tertiary-fixed-dim": "#c0c1ff",
-                        "inverse-primary": "#adc6ff",
-                        "secondary-fixed-dim": "#c1c6da",
-                        "on-primary-container": "#fefcff",
-                        "tertiary-fixed": "#e1e0ff",
-                        "surface-container-high": "#e5e8eb",
-                        "secondary-fixed": "#dee2f7",
-                        "on-tertiary-container": "#fffbff",
-                        "on-surface-variant": "#424754",
-                        "tertiary-container": "#6063ee",
-                        "surface-dim": "#d7dadd",
-                        "on-secondary": "#ffffff",
-                        "on-error": "#ffffff",
-                        "on-tertiary-fixed-variant": "#2f2ebe",
-                        "surface": "#f7fafd"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "xs": "8px",
-                        "sidebar-width": "260px",
-                        "xl": "32px",
-                        "sm": "12px",
-                        "gutter": "24px",
-                        "container-max-width": "1440px",
-                        "md": "16px",
-                        "base": "4px",
-                        "lg": "24px"
-                    },
-                    "fontFamily": {
-                        "label-md": ["Inter"],
-                        "headline-sm": ["Inter"],
-                        "headline-md": ["Inter"],
-                        "body-md": ["Inter"],
-                        "headline-lg": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "body-lg": ["Inter"]
-                    },
-                    "fontSize": {
-                        "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600"}],
-                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
-                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
-                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
-                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
-                    }
-                },
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#000000",
+                    "surface-variant": "#e4e2e2",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#e5e2e1",
+                    "tertiary-fixed-dim": "#c6c6c7",
+                    "on-background": "#1b1c1c",
+                    "on-tertiary-container": "#838484",
+                    "on-secondary-fixed": "#1c1b1b",
+                    "surface-dim": "#dbdad9",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f5f3f3",
+                    "on-secondary-fixed-variant": "#474746",
+                    "inverse-primary": "#c6c6c6",
+                    "on-tertiary": "#ffffff",
+                    "primary": "#000000",
+                    "surface-container-high": "#e9e8e7",
+                    "surface-bright": "#fbf9f8",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#1b1b1b",
+                    "secondary": "#5f5e5e",
+                    "background": "#fbf9f8",
+                    "secondary-container": "#e2dfde",
+                    "on-tertiary-fixed": "#1a1c1c",
+                    "surface-container-highest": "#e4e2e2",
+                    "outline": "#7e7576",
+                    "on-surface": "#1b1c1c",
+                    "on-primary-fixed-variant": "#474747",
+                    "on-error-container": "#93000a",
+                    "on-secondary-container": "#636262",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "primary-fixed": "#e2e2e2",
+                    "surface-tint": "#5e5e5e",
+                    "outline-variant": "#cfc4c5",
+                    "inverse-on-surface": "#f2f0f0",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-container": "#848484",
+                    "primary-fixed-dim": "#c6c6c6",
+                    "tertiary-fixed": "#e2e2e2",
+                    "on-tertiary-fixed-variant": "#454747",
+                    "on-surface-variant": "#4c4546",
+                    "surface-container": "#efeded",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#1b1b1b",
+                    "surface": "#fbf9f8",
+                    "inverse-surface": "#303031",
+                    "tertiary-container": "#1a1c1c",
+                    "error": "#ba1a1a"
             },
-        }
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "gutter": "16px",
+                    "base": "4px",
+                    "margin-mobile": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"],
+                    "label-lg": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "button": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
     </script>
 <style>
-        body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            display: inline-block;
             vertical-align: middle;
         }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-        
-        .table-glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.5);
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .focused-input {
+            border-color: #000000 !important;
+            box-shadow: inset 0 0 0 1px #000000;
         }
     </style>
-</head>
-<body class="bg-background text-on-background min-h-screen overflow-x-hidden">
-<!-- SIDEBAR ANCHOR -->
-<aside class="fixed h-full w-[260px] left-0 top-0 bg-on-secondary-fixed dark:bg-on-background border-r border-outline-variant dark:border-outline shadow-sm flex flex-col py-lg z-50">
-<div class="px-lg mb-xl">
-<h1 class="font-headline-md text-headline-md font-black text-primary-fixed dark:text-primary-fixed-dim">Comercial CRM</h1>
-<p class="text-secondary-fixed-dim opacity-70 font-label-sm text-label-sm">Sales Force</p>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-center p-gutter">
+<!-- Login Shell Suppression: Per mandates, Shell (Nav/TopBar) is hidden for Transactional pages -->
+<main class="w-full max-w-md bg-surface-container-lowest rounded-xl border border-outline-variant p-lg space-y-xl shadow-sm">
+<!-- Brand Identity Section -->
+<header class="flex flex-col items-center text-center space-y-md pt-md">
+<div class="w-16 h-16 bg-tertiary text-on-primary rounded-xl flex items-center justify-center mb-sm shadow-md transition-transform hover:scale-105 active:scale-95 duration-200">
+<span class="material-symbols-outlined text-4xl" data-icon="chair">chair</span>
 </div>
-<nav class="flex-1 overflow-y-auto custom-scrollbar">
-<ul class="space-y-1">
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">home</span>
-<span class="font-label-md text-label-md">Inicio</span>
-</a>
-</li>
-<li>
-<!-- ACTIVE TAB: Clientes -->
-<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-full mx-2 font-bold transition-transform active:scale-95" href="#">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
-<span class="font-label-md text-label-md">Clientes</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">handshake</span>
-<span class="font-label-md text-label-md">Oportunidades</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">account_tree</span>
-<span class="font-label-md text-label-md">Pipeline</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">analytics</span>
-<span class="font-label-md text-label-md">Seguimientos</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">calendar_today</span>
-<span class="font-label-md text-label-md">Agenda</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">star</span>
-<span class="font-label-md text-label-md">Intereses</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">support_agent</span>
-<span class="font-label-md text-label-md">Posventa</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">assessment</span>
-<span class="font-label-md text-label-md">Reportes</span>
-</a>
-</li>
-<li>
-<a class="flex items-center gap-3 px-4 py-3 text-secondary-fixed-dim hover:text-white mx-2 opacity-60 hover:bg-white/5 transition-all duration-200 active:scale-95" href="#">
-<span class="material-symbols-outlined">settings</span>
-<span class="font-label-md text-label-md">Configuración</span>
-</a>
-</li>
-</ul>
-</nav>
-<div class="px-4 mt-lg border-t border-white/10 pt-lg">
-<button class="w-full bg-primary py-3 rounded-xl text-white font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-lg active:scale-95 mb-4">
-<span class="material-symbols-outlined">upgrade</span>
-                Actualizar Plan
-            </button>
-<div class="flex items-center gap-3 px-2 py-3 text-secondary-fixed-dim opacity-80 cursor-pointer hover:text-white transition-colors">
-<span class="material-symbols-outlined">account_circle</span>
-<span class="font-label-md text-label-md">Perfil Vendor</span>
-</div>
-</div>
-</aside>
-<!-- MAIN CONTENT -->
-<main class="ml-[260px] min-h-screen">
-<!-- TOP NAV ANCHOR -->
-<header class="fixed top-0 right-0 w-[calc(100%-260px)] z-40 bg-surface/80 backdrop-blur-md shadow-sm h-20 px-xl flex justify-between items-center">
-<div class="flex items-center gap-xl">
-<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Panel comercial</h2>
-<div class="h-8 w-px bg-outline-variant"></div>
-<span class="font-body-md text-body-md text-on-surface-variant">Hoy: 24 Oct 2023</span>
-</div>
-<div class="flex items-center gap-lg">
-<div class="flex items-center gap-sm">
-<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all">
-<span class="material-symbols-outlined">help</span>
-</button>
-<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all">
-<span class="material-symbols-outlined">apps</span>
-</button>
-</div>
-<button class="flex items-center gap-2 px-lg py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:shadow-lg transition-all active:scale-95">
-<span class="material-symbols-outlined">add</span>
-                    Nuevo cliente
-                </button>
-<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden ring-2 ring-primary/10">
-<img class="w-full h-full object-cover" data-alt="Professional corporate headshot of a sales manager for a modern high-tech CRM interface, featuring soft natural lighting against a minimalist gray studio background. The style is clean, modern, and trustworthy, perfectly fitting the high-end light-mode aesthetic of the application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO0ZVOCkyOCHhxTzfgoc6wleNcis2c9l7xPEo-0JWhuxkbL5FsHgdUl4LBvFl9jp4j3HrtWaPSEmphwC8AhzCZrkAdv18a6_d11DQRb8PvW2bcMnBx75Lw2j5Q2KfWylzQPahEhAuFPod9DcPFJ57rzJitpCrJgqwCe2sr6jBE1mELzcJt7568TS0gerTAp5YA76ab66kojBYmwRPA3-c8_T8wKXk2cFAim7h2IryVf-ZWGYCVSQku"/>
-</div>
+<div class="space-y-base">
+<h1 class="font-headline-lg text-headline-lg-mobile text-primary tracking-tight">El Gallego</h1>
+<p class="font-label-lg text-label-lg uppercase tracking-widest text-secondary">CRM COMERCIAL</p>
 </div>
 </header>
-<!-- CANVAS -->
-<div class="pt-24 pb-12 px-xl max-w-container-max-width mx-auto">
-<!-- HEADER SECTION WITH SEARCH & FILTERS -->
-<div class="mb-lg">
-<div class="flex flex-col md:flex-row md:items-end justify-between gap-lg mb-lg">
-<div>
-<h3 class="font-headline-lg text-headline-lg text-on-surface">Directorio de Clientes</h3>
-<p class="text-on-surface-variant font-body-md text-body-md mt-1">Gestiona y segmenta tu base de clientes de alto rendimiento.</p>
+<!-- Form Content -->
+<section class="space-y-lg">
+<div class="space-y-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface">Bienvenido de nuevo</h2>
+<p class="font-body-md text-body-md text-secondary">Ingresa tus credenciales para acceder a tu cuenta.</p>
 </div>
-<div class="flex items-center gap-sm">
+<form action="#" class="space-y-md" onsubmit="return false;">
+<!-- Email Field -->
+<div class="space-y-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant px-xs" for="email">Correo electrónico</label>
 <div class="relative group">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
-<input class="pl-10 pr-lg py-2.5 w-[320px] rounded-lg border border-outline-variant bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-body-md text-body-md" placeholder="Buscar por nombre, empresa o email..." type="text"/>
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-secondary" data-icon="mail">mail</span>
 </div>
-<button class="flex items-center gap-2 px-4 py-2.5 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors">
-<span class="material-symbols-outlined">filter_list</span>
-                            Filtros Avanzados
-                        </button>
-<button class="p-2.5 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors">
-<span class="material-symbols-outlined">download</span>
+<input class="w-full bg-surface border border-outline-variant rounded-lg py-md pl-12 pr-md font-body-md text-body-md focus:outline-none focus:ring-0 focus:border-primary transition-all" id="email" name="email" placeholder="nombre@correo.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant px-xs" for="password">Contraseña</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-secondary" data-icon="lock">lock</span>
+</div>
+<input class="w-full bg-surface border border-outline-variant rounded-lg py-md pl-12 pr-md font-body-md text-body-md focus:outline-none focus:ring-0 focus:border-primary transition-all" id="password" name="password" placeholder="Tu contraseña" required="" type="password"/>
+<div class="absolute inset-y-0 right-0 pr-md flex items-center cursor-pointer text-secondary hover:text-primary transition-colors" onclick="togglePassword()">
+<span class="material-symbols-outlined" data-icon="visibility" id="pass-toggle-icon">visibility</span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-tertiary text-on-primary font-button text-button py-md px-lg rounded-lg flex justify-center items-center gap-sm uppercase tracking-wider transition-all duration-200 active:scale-95 active:opacity-90 mt-xl shadow-lg hover:shadow-xl" type="submit">
+                    INICIAR SESIÓN
+                    <span class="material-symbols-outlined text-xl" data-icon="arrow_forward">arrow_forward</span>
 </button>
-</div>
-</div>
-<!-- QUICK FILTERS PILLS -->
-<div class="flex items-center gap-sm overflow-x-auto pb-2 custom-scrollbar">
-<button class="px-4 py-1.5 bg-primary-fixed text-on-primary-fixed font-label-md text-label-md rounded-full shadow-sm">Todos (2,450)</button>
-<button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-full hover:bg-outline-variant transition-colors">Clientes Activos</button>
-<button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-full hover:bg-outline-variant transition-colors">Prospectos Hot</button>
-<button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-full hover:bg-outline-variant transition-colors">Segmento Enterprise</button>
-<button class="px-4 py-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-full hover:bg-outline-variant transition-colors">Baja Probabilidad</button>
-<div class="h-6 w-px bg-outline-variant mx-2"></div>
-<button class="px-4 py-1.5 text-primary font-label-md text-label-md flex items-center gap-1 hover:underline">
-<span class="material-symbols-outlined text-sm">add</span>
-                        Guardar Segmento
-                    </button>
-</div>
-</div>
-<!-- CLIENTS TABLE -->
-<div class="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-surface-container-low border-b border-outline-variant">
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Nombre</th>
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Empresa</th>
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Última Interacción</th>
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Valor Estimado</th>
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Estado</th>
-<th class="px-lg py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Acciones</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant">
-<!-- ROW 1 -->
-<tr class="hover:bg-surface-bright transition-colors group">
-<td class="px-lg py-sm">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Portrait of a smiling executive woman in professional attire, photographed with shallow depth of field in a modern corporate office setting. The lighting is soft and airy, conveying a sense of success and partnership, matching the premium light-mode CRM aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnBLrkpTdUD9jNMQNxRSEr_f85Nl4ZjPfXzx4_StQVp4-p0qV7RdaWXS0yygbd48w1Dp4bW2Gq9MtXQDY4qy7RjJ9wPB_7dd_euhPMCo2DV3V-GQKbdXn7pyr4FxgsW31Y4_lk0IYfZCJVoedxVhZFNBF-db9faRm2v7EjbKe-eL_sk0KiQejWtCZP-tlK2ZZsCo8Ep-Qz-yXIKpifdSu4T-MdTG1gv2v5oVzJV3aAkWpWN5Ez1NEW"/>
-</div>
-<div>
-<div class="font-label-md text-label-md text-on-surface">Elena Rodriguez</div>
-<div class="text-on-surface-variant font-body-md text-sm">elena.r@globaltech.com</div>
-</div>
-</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">GlobalTech Solutions</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Enterprise</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Hace 2 horas</div>
-<div class="flex items-center gap-1 text-on-tertiary-fixed-variant font-label-sm text-label-sm">
-<span class="material-symbols-outlined text-[14px]">call</span> Llamada realizada
-                                    </div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-label-md text-label-md text-primary">$45,000 USD</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Anual</div>
-</td>
-<td class="px-lg py-sm">
-<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
-<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                        Activo
-                                    </span>
-</td>
-<td class="px-lg py-sm text-right">
-<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-<button class="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
-<span class="material-symbols-outlined">chat</span>
-</button>
-<button class="p-2 rounded-lg text-primary hover:bg-primary-fixed transition-colors" title="Llamar">
-<span class="material-symbols-outlined">call</span>
-</button>
-<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-lg hover:bg-outline-variant transition-colors">
-                                            Ver ficha
-                                        </button>
-</div>
-</td>
-</tr>
-<!-- ROW 2 -->
-<tr class="hover:bg-surface-bright transition-colors group">
-<td class="px-lg py-sm">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Portrait of a young tech entrepreneur with glasses and a friendly expression, captured in a bright co-working space. High-key lighting, modern atmosphere, clean minimalist aesthetic representing a fast-growing startup founder client for a CRM dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCx9GM5EF4Ry3USs1tmvuiZzPJfkMG638a1l__FnbGgqee80mIjjjyqSJZno4Uf1uYaPc0eiIfY4hL2-qWhChNDVXAxDFyaXyneOJGh9tHzc74B79KWOaNebJ_BlfMY0CS8U4LLH_TipO--ZNloCBLmw0yjI6rjMg9_abWBlUgCWPixqG1F8o5EnEjizpJf-toOJIw-7VVnGeFEReyKXd2R0HP0JmSQxBD_Um9MZj3kUI-V4n-Qaf69"/>
-</div>
-<div>
-<div class="font-label-md text-label-md text-on-surface">Marcos Valero</div>
-<div class="text-on-surface-variant font-body-md text-sm">mvalero@innovate.io</div>
-</div>
-</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Innovate.io</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Scale-up</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Ayer, 16:45</div>
-<div class="flex items-center gap-1 text-primary-fixed-variant font-label-sm text-label-sm">
-<span class="material-symbols-outlined text-[14px]">mail</span> Correo enviado
-                                    </div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-label-md text-label-md text-primary">$12,800 USD</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Mensual</div>
-</td>
-<td class="px-lg py-sm">
-<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
-<span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-                                        En Negociación
-                                    </span>
-</td>
-<td class="px-lg py-sm text-right">
-<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-<button class="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
-<span class="material-symbols-outlined">chat</span>
-</button>
-<button class="p-2 rounded-lg text-primary hover:bg-primary-fixed transition-colors" title="Llamar">
-<span class="material-symbols-outlined">call</span>
-</button>
-<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-lg hover:bg-outline-variant transition-colors">
-                                            Ver ficha
-                                        </button>
-</div>
-</td>
-</tr>
-<!-- ROW 3 -->
-<tr class="hover:bg-surface-bright transition-colors group">
-<td class="px-lg py-sm">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Portrait of a senior male executive with a look of experience and wisdom, set against a blurred view of a metropolitan skyline through office windows. The lighting is professional and crisp, emphasizing quality and high-level corporate interactions for a premium CRM user experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxCdkb6CvEPaaLnWDpsBxbA2hW7-i_zBXKV9uGlNNIuCyTePgAKPLphwNkUM_Y4kfd_4VnWycBx4yMEgFHvDx6gdVXLfWGS6bdxLYqxdoOgHyJ1aUw2jEBgRcrGg0iPb0pbCMwRuIj_bZCIFmqYRcWtBkzfZX1uAkMO-4vc97DpgForRYWDTgHMqIcFOLZzIo1RFnhrF_DfnxFLR40UgDSUEtccX42QFfEt_H0WWWE-frDOZxck7Eb"/>
-</div>
-<div>
-<div class="font-label-md text-label-md text-on-surface">Javier Méndez</div>
-<div class="text-on-surface-variant font-body-md text-sm">j.mendez@nexuscorp.com</div>
-</div>
-</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Nexus Corp</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Strategic</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">12 Oct 2023</div>
-<div class="flex items-center gap-1 text-on-surface-variant opacity-60 font-label-sm text-label-sm">
-<span class="material-symbols-outlined text-[14px]">event</span> Reunión física
-                                    </div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-label-md text-label-md text-primary">$120,000 USD</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Proyecto</div>
-</td>
-<td class="px-lg py-sm">
-<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full font-label-sm text-label-sm inline-flex items-center gap-1">
-<span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                                        Riesgo de Churn
-                                    </span>
-</td>
-<td class="px-lg py-sm text-right">
-<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-<button class="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
-<span class="material-symbols-outlined">chat</span>
-</button>
-<button class="p-2 rounded-lg text-primary hover:bg-primary-fixed transition-colors" title="Llamar">
-<span class="material-symbols-outlined">call</span>
-</button>
-<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-lg hover:bg-outline-variant transition-colors">
-                                            Ver ficha
-                                        </button>
-</div>
-</td>
-</tr>
-<!-- ROW 4 -->
-<tr class="hover:bg-surface-bright transition-colors group">
-<td class="px-lg py-sm">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Close-up headshot of a creative director woman with a stylish, professional appearance. Bright sunlight filtering through architectural elements in the background creates a warm, premium feel. This image represents a modern, design-forward client profile in a high-end business CRM." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTSRJ85i1dZbevVM4MhcZzf_wFIG_5W7cgvzlHI2MPFGfZKmVZQmvuHsahelwwd_KR_VOHWXz7km3JnXLJJ48uwRZVXTi84z5dtCT_67peC6z0VbA2uY74d4eMUVhhXrMHHEsHQvDmcMi9-wunX0um6J65g-fmm6o0G8Phk0KDXbp6Wopiec22cAkXvIHy01raSh-6n8gkuVHYm8RAQT2FSzslsBP6IiHnVlnvE90y5jEgZfOBVirs"/>
-</div>
-<div>
-<div class="font-label-md text-label-md text-on-surface">Sofía Castillo</div>
-<div class="text-on-surface-variant font-body-md text-sm">s.castillo@bluecreative.com</div>
-</div>
-</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Blue Creative</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">SMB</div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-body-md text-body-md text-on-surface">Hace 15 min</div>
-<div class="flex items-center gap-1 text-primary font-label-sm text-label-sm">
-<span class="material-symbols-outlined text-[14px]">question_answer</span> Mensaje recibido
-                                    </div>
-</td>
-<td class="px-lg py-sm">
-<div class="font-label-md text-label-md text-primary">$3,500 USD</div>
-<div class="text-on-surface-variant font-label-sm text-label-sm">Retainer</div>
-</td>
-<td class="px-lg py-sm">
-<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm rounded-full inline-flex items-center gap-1">
-<span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-                                        Nuevo
-                                    </span>
-</td>
-<td class="px-lg py-sm text-right">
-<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-<button class="p-2 rounded-lg text-green-600 hover:bg-green-50 transition-colors" title="WhatsApp">
-<span class="material-symbols-outlined">chat</span>
-</button>
-<button class="p-2 rounded-lg text-primary hover:bg-primary-fixed transition-colors" title="Llamar">
-<span class="material-symbols-outlined">call</span>
-</button>
-<button class="px-3 py-1.5 bg-surface-container-highest text-on-surface font-label-md text-label-md rounded-lg hover:bg-outline-variant transition-colors">
-                                            Ver ficha
-                                        </button>
-</div>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<!-- PAGINATION -->
-<div class="px-lg py-4 border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
-<span class="font-body-md text-body-md text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">1 - 4</span> de <span class="font-bold text-on-surface">2,450</span> clientes</span>
-<div class="flex items-center gap-sm">
-<button class="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-white transition-colors disabled:opacity-40" disabled="">
-<span class="material-symbols-outlined">chevron_left</span>
-</button>
-<div class="flex items-center gap-1">
-<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white font-label-md text-label-md">1</button>
-<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white font-label-md text-label-md">2</button>
-<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white font-label-md text-label-md">3</button>
-<span class="px-2">...</span>
-<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white font-label-md text-label-md">613</button>
-</div>
-<button class="p-2 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-white transition-colors">
-<span class="material-symbols-outlined">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-<!-- SUMMARY BENTO GRID -->
-<div class="mt-xl grid grid-cols-1 md:grid-cols-4 gap-lg">
-<div class="bg-white p-lg rounded-xl border border-outline-variant shadow-sm">
-<div class="text-on-surface-variant font-label-md text-label-md uppercase mb-2">Total en Pipeline</div>
-<div class="text-headline-md font-headline-md text-primary">$1,240,500</div>
-<div class="mt-2 text-green-600 font-label-sm text-label-sm flex items-center gap-1">
-<span class="material-symbols-outlined text-[16px]">trending_up</span> +12% este mes
-                    </div>
-</div>
-<div class="bg-white p-lg rounded-xl border border-outline-variant shadow-sm">
-<div class="text-on-surface-variant font-label-md text-label-md uppercase mb-2">Conversión Clientes</div>
-<div class="text-headline-md font-headline-md text-on-surface">24.8%</div>
-<div class="mt-2 text-on-surface-variant font-label-sm text-label-sm">Promedio industria: 18%</div>
-</div>
-<div class="bg-white p-lg rounded-xl border border-outline-variant shadow-sm">
-<div class="text-on-surface-variant font-label-md text-label-md uppercase mb-2">Interacciones (24h)</div>
-<div class="text-headline-md font-headline-md text-on-surface">142</div>
-<div class="mt-2 text-primary font-label-sm text-label-sm flex items-center gap-1">
-<span class="material-symbols-outlined text-[16px]">bolt</span> 12 Hot leads detectados
-                    </div>
-</div>
-<div class="bg-white p-lg rounded-xl border border-outline-variant shadow-sm relative overflow-hidden group cursor-pointer">
-<div class="relative z-10">
-<div class="text-on-surface-variant font-label-md text-label-md uppercase mb-2">Satisfacción NPS</div>
-<div class="text-headline-md font-headline-md text-on-surface">8.9/10</div>
-<div class="mt-2 text-on-tertiary-fixed-variant font-label-sm text-label-sm">Basado en 450 reseñas</div>
-</div>
-<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 group-hover:opacity-10 transition-all duration-700">
-<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">sentiment_very_satisfied</span>
-</div>
-</div>
-</div>
-</div>
+</form>
+</section>
+<!-- Footer / Redirect -->
+<footer class="pt-lg border-t border-surface-container text-center">
+<p class="font-body-md text-body-md text-secondary">
+                No tenes cuenta? 
+                <a class="text-primary font-bold hover:underline decoration-2 underline-offset-4" href="#">Pedile acceso al administrador.</a>
+</p>
+</footer>
 </main>
-<!-- FLOATING ACTION BUTTON (Contextual: Home/Dashboard intent) -->
-<button class="fixed bottom-xl right-xl w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
-</button>
+<!-- Visual Backdrop Decor (Subtle Atmosphere) -->
+<div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden opacity-50">
+<div class="absolute -top-[10%] -left-[5%] w-[40%] h-[40%] bg-surface-container-high rounded-full blur-[100px]"></div>
+<div class="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-secondary-container rounded-full blur-[120px]"></div>
+</div>
 <script>
-        // Micro-interactions and hover effects
-        document.querySelectorAll('tr').forEach(row => {
-            row.addEventListener('mouseenter', () => {
-                row.querySelector('.group-hover\\:opacity-100')?.classList.remove('opacity-0');
-            });
-            row.addEventListener('mouseleave', () => {
-                row.querySelector('.group-hover\\:opacity-100')?.classList.add('opacity-0');
-            });
-        });
+        // Micro-interaction: Toggle Password Visibility
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            const icon = document.getElementById('pass-toggle-icon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                passInput.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        }
 
-        // Search Bar focus effect
-        const searchInput = document.querySelector('input[type="text"]');
-        searchInput.addEventListener('focus', () => {
-            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
-        });
-        searchInput.addEventListener('blur', () => {
-            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        // Add subtle focus animation logic for form groups
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('scale-[1.01]');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('scale-[1.01]');
+            });
         });
     </script>
 </body></html>
