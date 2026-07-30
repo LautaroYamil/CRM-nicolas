@@ -303,7 +303,79 @@ export default async function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto border-t border-outline-variant/30">
+            <>
+            {/* Tarjetas (celular) */}
+            <ul className="space-y-3 lg:hidden">
+              {pendingRows.map((row) => {
+                const client = row.clients;
+                const clientName = client ? `${client.first_name} ${client.last_name ?? ""}`.trim() : "Cliente";
+                const overdue = row.scheduled_at < nowIso;
+                const isToday = row.scheduled_at >= startIso;
+
+                return (
+                  <li key={row.id} className="card-premium rounded-xl p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        {client ? (
+                          <Link href={`/clients/${client.id}`} className="block truncate font-bold">
+                            {clientName}
+                          </Link>
+                        ) : (
+                          <p className="truncate font-bold">{clientName}</p>
+                        )}
+                        <p
+                          className={clsx(
+                            "mt-0.5 text-sm font-bold",
+                            overdue ? "text-error" : "text-on-surface",
+                          )}
+                        >
+                          {isToday ? `Hoy, ${formatTimeAr(row.scheduled_at)}` : formatDateTimeAr(row.scheduled_at)}
+                          {overdue ? (
+                            <span className="ml-1 text-[10px] uppercase"> - {formatRelativeAr(row.scheduled_at)}</span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <span
+                        className={clsx(
+                          "shrink-0 rounded border px-2 py-1 text-[10px] font-bold tracking-wider uppercase",
+                          overdue
+                            ? "border-error/20 bg-error-container/20 text-error"
+                            : "border-outline-variant/40 bg-surface-container text-on-surface-variant",
+                        )}
+                      >
+                        {activityTypeLabel(row.type)}
+                      </span>
+                    </div>
+                    {row.objective ? (
+                      <p className="mt-2 text-sm text-on-surface-variant italic">&quot;{row.objective}&quot;</p>
+                    ) : null}
+                    {client ? (
+                      <div className="mt-3 flex gap-2">
+                        <a
+                          href={`https://wa.me/${client.phone_normalized.replace(/\D+/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 py-2 text-xs font-bold tracking-wider text-white uppercase"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">chat</span>
+                          WhatsApp
+                        </a>
+                        <Link
+                          href={`/clients/${client.id}`}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant/40 py-2 text-xs font-bold tracking-wider uppercase"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">visibility</span>
+                          Ficha
+                        </Link>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Tabla (desktop) */}
+            <div className="hidden overflow-x-auto border-t border-outline-variant/30 lg:block">
               <table className="w-full min-w-[860px]">
                 <thead>
                   <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
@@ -438,6 +510,7 @@ export default async function DashboardPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
       </div>

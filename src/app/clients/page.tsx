@@ -245,7 +245,85 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto border-t border-outline-variant/30">
+          <>
+          {/* Tarjetas (celular) */}
+          <ul className="space-y-3 lg:hidden">
+            {(clients ?? []).map((client) => {
+              const clientName = `${client.first_name} ${client.last_name ?? ""}`.trim();
+              const interests = interestsByClient.get(client.id) ?? [];
+              const followUpOverdue =
+                client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
+
+              return (
+                <li key={client.id} className="card-premium rounded-xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/clients/${client.id}`} className="block truncate font-bold">
+                        {clientName}
+                      </Link>
+                      <p className="truncate text-xs text-on-surface-variant/70">
+                        {client.phone_normalized}
+                        {client.locality ? ` - ${client.locality}` : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={clsx(
+                        "shrink-0 rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
+                        STATUS_CHIP_CLASSES[client.status] ??
+                          "border-outline-variant/40 bg-surface-container text-on-surface-variant",
+                      )}
+                    >
+                      {clientStatusLabel(client.status)}
+                    </span>
+                  </div>
+                  <div className="mt-2 space-y-0.5 text-sm">
+                    <p className="text-on-surface-variant">
+                      Ultimo contacto: {formatRelativeAr(client.last_contact_at)}
+                    </p>
+                    <p className={clsx(followUpOverdue ? "font-bold text-error" : "text-on-surface-variant")}>
+                      Proximo: {formatDateTimeAr(client.next_follow_up_at)}
+                    </p>
+                    {interests.length > 0 ? (
+                      <p className="truncate text-on-surface-variant">{interests.join(", ")}</p>
+                    ) : null}
+                    {profile.role === "admin" ? (
+                      <p className="text-on-surface-variant">
+                        Vendedor: {sellersById.get(client.assigned_user_id) ?? "-"}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <a
+                      href={`https://wa.me/${client.phone_normalized.replace(/\D+/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 py-2 text-xs font-bold tracking-wider text-white uppercase"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">chat</span>
+                      WhatsApp
+                    </a>
+                    <Link
+                      href={`/clients/${client.id}`}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant/40 py-2 text-xs font-bold tracking-wider uppercase"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">visibility</span>
+                      Ficha
+                    </Link>
+                    <Link
+                      href={`/clients/${client.id}/edit`}
+                      className="flex items-center justify-center rounded-lg border border-outline-variant/40 px-3 py-2"
+                      title="Editar"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                    </Link>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Tabla (desktop) */}
+          <div className="hidden overflow-x-auto border-t border-outline-variant/30 lg:block">
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
@@ -359,6 +437,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Paginacion */}
