@@ -13,12 +13,12 @@ type AppShellProps = {
 
 export function AppShell({ profile, title, children }: AppShellProps) {
   const navItems: NavItem[] = [
-    { label: "Inicio", href: "/dashboard", icon: "home" },
-    { label: "Clientes", href: "/clients", icon: "group" },
+    { label: "Inicio", href: "/dashboard", icon: "dashboard" },
+    { label: "Clientes", href: "/clients", icon: "groups" },
     { label: "Agenda", href: "/agenda", icon: "calendar_today" },
-    { label: "Reportes", href: "/reports", icon: "monitoring" },
+    { label: "Reportes", href: "/reports", icon: "analytics" },
     ...(profile.role === "admin"
-      ? [{ label: "Intereses", href: "/admin/interests", icon: "star" }]
+      ? [{ label: "Intereses", href: "/admin/interests", icon: "favorite" }]
       : []),
   ];
 
@@ -32,34 +32,26 @@ export function AppShell({ profile, title, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background text-on-surface">
       {/* Sidebar (desktop) */}
-      <aside className="fixed top-0 left-0 z-50 hidden h-full w-[260px] flex-col border-r border-white/5 bg-gradient-to-b from-[#141927] via-[#161b2a] to-[#1b2236] py-6 shadow-2xl lg:flex">
-        <div className="mb-8 px-6">
-          <h1 className="text-[24px] leading-tight tracking-tight">
-            <span className="font-light text-white/75">El </span>
-            <span className="bg-gradient-to-r from-white via-primary-fixed to-primary-fixed-dim bg-clip-text font-black text-transparent">
-              Gallego
-            </span>
-          </h1>
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="h-px w-7 bg-gradient-to-r from-primary-fixed-dim/70 to-transparent" />
-            <p className="text-[10px] font-semibold tracking-[0.3em] text-white/40 uppercase">
-              CRM Comercial
-            </p>
-          </div>
+      <aside className="fixed top-0 left-0 z-50 hidden h-full w-[260px] flex-col border-r border-outline-variant/30 bg-surface-container-low lg:flex">
+        <div className="px-8 py-10">
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary">EL GALLEGO</h1>
+          <p className="mt-1 text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/70 uppercase">
+            CRM Corporativo
+          </p>
         </div>
 
         <SidebarNavLinks items={navItems} />
 
-        <div className="mt-auto px-6">
-          <div className="flex items-center gap-3 border-t border-white/10 pt-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-fixed text-label-md font-bold text-primary">
+        <div className="mt-auto p-4">
+          <div className="mt-4 flex items-center gap-3 border-t border-outline-variant/30 px-4 py-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container font-bold text-on-primary shadow-sm">
               {initials}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-label-md leading-none font-semibold text-white">
+            <div className="flex-1 overflow-hidden">
+              <p className="truncate text-sm font-bold text-on-surface">
                 {profile.full_name ?? "Sin nombre"}
               </p>
-              <p className="text-xs text-secondary-fixed-dim">
+              <p className="text-[10px] tracking-wider text-on-surface-variant uppercase">
                 {profile.role === "admin" ? "Administrador" : "Vendedor"}
               </p>
             </div>
@@ -67,9 +59,9 @@ export function AppShell({ profile, title, children }: AppShellProps) {
               <button
                 type="submit"
                 title="Cerrar sesion"
-                className="rounded-full p-2 text-secondary-fixed-dim transition-colors hover:bg-white/10 hover:text-white"
+                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
               >
-                <span className="material-symbols-outlined">logout</span>
+                logout
               </button>
             </form>
           </div>
@@ -77,50 +69,52 @@ export function AppShell({ profile, title, children }: AppShellProps) {
       </aside>
 
       {/* Contenido */}
-      <div className="lg:ml-[260px]">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-outline-variant/50 bg-surface/80 px-4 backdrop-blur-md lg:h-20 lg:px-8">
-          <div className="flex min-w-0 items-center gap-6">
-            <h2 className="truncate text-headline-sm font-bold">{title}</h2>
-            <form action="/clients" method="get" className="relative hidden w-72 md:block">
-              <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-outline">
+      <div className="flex min-h-screen flex-col lg:ml-[260px]">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-outline-variant/20 bg-surface/80 px-4 backdrop-blur-md lg:h-20 lg:px-8">
+          <div className="flex min-w-0 flex-1 items-center gap-8">
+            <h2 className="truncate text-xl font-bold tracking-tight text-on-surface">{title}</h2>
+            <form action="/clients" method="get" className="relative hidden w-full max-w-md md:block">
+              <span className="material-symbols-outlined absolute top-1/2 left-4 -translate-y-1/2 text-on-surface-variant/60">
                 search
               </span>
               <input
                 type="text"
                 name="search"
                 placeholder="Buscar clientes..."
-                className="w-full rounded-full border-none bg-surface-container-low py-2 pr-4 pl-10 text-body-md focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-lg border border-outline-variant/40 bg-surface-container-low py-2.5 pr-4 pl-11 text-sm transition-all focus:border-transparent focus:ring-1 focus:ring-primary focus:outline-none"
               />
             </form>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden text-label-md text-on-surface-variant xl:block">
-              Hoy: {formatLongDateAr()}
+          <div className="flex items-center gap-4 lg:gap-8">
+            <span className="hidden border-r border-outline-variant/20 pr-8 text-xs font-semibold tracking-widest text-on-surface-variant/70 uppercase xl:block">
+              {formatLongDateAr()}
             </span>
             <Link
               href="/clients/new"
-              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-label-md font-semibold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] lg:px-6"
             >
-              <span className="material-symbols-outlined text-base">person_add</span>
-              <span className="hidden sm:inline">Nuevo cliente</span>
+              <span className="material-symbols-outlined text-[20px]">person_add</span>
+              <span className="hidden sm:inline">Nuevo contacto</span>
             </Link>
             <form action={logoutAction} className="lg:hidden">
               <button
                 type="submit"
                 title="Cerrar sesion"
-                className="rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
               >
-                <span className="material-symbols-outlined">logout</span>
+                logout
               </button>
             </form>
           </div>
         </header>
 
-        <main className="px-4 pt-6 pb-24 lg:px-8 lg:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pt-6 pb-24 lg:px-10 lg:pt-10 lg:pb-12">
+          {children}
+        </main>
       </div>
 
       {/* Barra inferior (celular) */}
-      <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-outline-variant/50 bg-surface-container-lowest/95 backdrop-blur-md lg:hidden">
+      <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-outline-variant/30 bg-surface-container-lowest/95 backdrop-blur-md lg:hidden">
         <BottomNavLinks items={navItems} />
       </div>
     </div>

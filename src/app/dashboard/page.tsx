@@ -7,6 +7,7 @@ import {
   argGreeting,
   argTodayRange,
   formatDateTimeAr,
+  formatRelativeAr,
   formatTimeAr,
   isoDaysAgo,
 } from "@/lib/crm/dates";
@@ -24,15 +25,24 @@ type PendingRow = {
     first_name: string;
     last_name: string | null;
     phone_normalized: string;
+    status: string;
   } | null;
 };
 
-const FUNNEL_STATUSES = ["nuevo", "interesado", "en_seguimiento", "compro"] as const;
-const FUNNEL_SEGMENT_CLASSES = [
-  "bg-primary/10 text-primary",
-  "bg-primary/20 text-primary",
-  "bg-primary/40 text-primary",
-  "bg-green-500 text-white rounded-r-xl",
+const CHANNEL_ICONS: Record<string, string> = {
+  llamada: "call",
+  whatsapp: "chat",
+  email: "mail",
+  visita: "storefront",
+  reunion: "groups",
+  nota: "sticky_note_2",
+};
+
+const FUNNEL_SEGMENTS = [
+  { status: "nuevo", barClass: "bg-primary/80" },
+  { status: "interesado", barClass: "bg-surface-dim" },
+  { status: "en_seguimiento", barClass: "bg-outline-variant" },
+  { status: "compro", barClass: "bg-green-600/80" },
 ] as const;
 
 export default async function DashboardPage() {
@@ -81,7 +91,7 @@ export default async function DashboardPage() {
       supabase
         .from("activities")
         .select(
-          "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized)",
+          "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized, status)",
         )
         .eq("status", "pendiente")
         .lt("scheduled_at", endIso)
@@ -97,6 +107,12 @@ export default async function DashboardPage() {
   for (const row of statusRes.data ?? []) {
     statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1);
   }
+  const funnelTotal = FUNNEL_SEGMENTS.reduce(
+    (sum, segment) => sum + (statusCounts.get(segment.status) ?? 0),
+    0,
+  );
+
+  const overdueCount = overdueRes.count ?? 0;
 
   const kpis = [
     {
@@ -108,27 +124,27 @@ export default async function DashboardPage() {
     },
     {
       label: "Vencidos",
-      value: overdueRes.count ?? 0,
-      icon: "warning",
+      value: overdueCount,
+      icon: "warning_amber",
       href: "/agenda",
       tone: "error" as const,
     },
     {
-      label: "Nuevos (7 dias)",
+      label: "Nuevos (7d)",
       value: newClientsRes.count ?? 0,
       icon: "person_add",
       href: "/clients",
       tone: "default" as const,
     },
     {
-      label: `Sin contacto ${DAYS_WITHOUT_CONTACT}+ dias`,
+      label: `Inactivos ${DAYS_WITHOUT_CONTACT}d+`,
       value: staleRes.count ?? 0,
       icon: "history",
       href: "/clients",
       tone: "default" as const,
     },
     {
-      label: "Posventa pendiente",
+      label: "Posventa",
       value: boughtRes.count ?? 0,
       icon: "support_agent",
       href: "/clients?status=compro",
@@ -140,60 +156,43 @@ export default async function DashboardPage() {
   const firstName = (profile.full_name ?? "").split(/\s+/)[0] || "vendedor";
 
   return (
-    <AppShell profile={profile} title="Panel comercial">
-      <section className="mb-8">
-        <h1 className="text-headline-md font-bold lg:text-headline-lg">
-          {argGreeting()}, {firstName}
-        </h1>
-        <p className="text-body-lg text-on-surface-variant">
-          {(overdueRes.count ?? 0) > 0
-            ? "Tenes seguimientos vencidos. Revisalos antes de que se enfrien."
-            : "Esto es lo que necesita atencion hoy."}
-        </p>
-      </section>
+    <AppShell profile={profile} title="Panel Comercial">
+      <div className="space-y-10">
+        {/* Saludo */}
+        <section className="space-y-2">
+          <h1 className="text-headline-md font-bold tracking-tight text-on-surface lg:text-headline-xl">
+            {argGreeting()}, {firstName}
+          </h1>
+          <div className="flex items-center gap-2 font-medium text-on-surface-variant">
+            {overdueCount > 0 ? (
+              <>
+                <span className="h-2 w-2 animate-pulse rounded-full bg-error" />
+                <p>Tenes seguimientos vencidos. Revisalos antes de que se enfrien.</p>
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-green-600" />
+                <p>Todo al dia. Esto es lo que viene.</p>
+              </>
+            )}
+          </div>
+        </section>
 
-      <div className="rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm lg:p-8">
         {/* KPIs */}
-        <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-6 xl:grid-cols-5">
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
           {kpis.map((kpi) => (
             <Link
               key={kpi.label}
               href={kpi.href}
               className={clsx(
-                "group flex flex-col rounded-2xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:p-5",
-                kpi.tone === "error" && "border-error/20 bg-error-container/20 hover:shadow-error/10",
-                kpi.tone === "success" && "border-green-200 bg-green-50 hover:shadow-green-600/10",
-                kpi.tone === "default" &&
-                  "border-outline-variant/30 bg-surface-container-lowest hover:shadow-primary/10",
+                "card-premium flex h-36 flex-col justify-between rounded-xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-md lg:h-40 lg:p-6",
+                kpi.tone === "error" && "border-error/20 bg-error-container/10",
+                kpi.tone === "success" && "border-green-500/10",
               )}
             >
-              <div className="flex items-center justify-between">
-                <span
-                  className={clsx(
-                    "flex h-10 w-10 items-center justify-center rounded-xl",
-                    kpi.tone === "error" && "bg-error/10 text-error",
-                    kpi.tone === "success" && "bg-green-600/10 text-green-700",
-                    kpi.tone === "default" && "bg-primary/10 text-primary",
-                  )}
-                >
-                  <span className="material-symbols-outlined">{kpi.icon}</span>
-                </span>
-                <span className="material-symbols-outlined text-outline-variant opacity-0 transition-opacity group-hover:opacity-100">
-                  arrow_forward
-                </span>
-              </div>
-              <span
-                className={clsx(
-                  "mt-3 text-3xl font-black tracking-tight",
-                  kpi.tone === "error" && "text-error",
-                  kpi.tone === "success" && "text-green-800",
-                )}
-              >
-                {kpi.value}
-              </span>
               <p
                 className={clsx(
-                  "mt-0.5 text-label-sm font-semibold tracking-wide uppercase",
+                  "text-[10px] font-bold tracking-[0.2em] uppercase",
                   kpi.tone === "error" && "text-error",
                   kpi.tone === "success" && "text-green-700",
                   kpi.tone === "default" && "text-on-surface-variant",
@@ -201,79 +200,123 @@ export default async function DashboardPage() {
               >
                 {kpi.label}
               </p>
-            </Link>
-          ))}
-        </div>
-
-        {/* Embudo de estados */}
-        <section className="mb-8 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 lg:p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-headline-sm font-semibold">Cartera por estado</h3>
-            <Link href="/clients" className="flex items-center gap-1 text-label-md font-semibold text-primary hover:underline">
-              Ver clientes
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </Link>
-          </div>
-          <div className="flex h-16 w-full items-stretch gap-1 overflow-hidden rounded-xl">
-            {FUNNEL_STATUSES.map((status, index) => (
-              <Link
-                key={status}
-                href={`/clients?status=${status}`}
+              <div>
+                <p
+                  className={clsx(
+                    "text-5xl",
+                    kpi.tone === "error" ? "font-bold text-error" : "font-light",
+                    kpi.tone === "success" && "text-green-700",
+                    kpi.tone === "default" && "text-on-surface",
+                  )}
+                >
+                  {kpi.value}
+                </p>
+                <div
+                  className={clsx(
+                    "indicator-accent",
+                    kpi.tone === "error" && "bg-error",
+                    kpi.tone === "success" && "bg-green-500",
+                    kpi.tone === "default" && "bg-primary",
+                  )}
+                />
+              </div>
+              <span
                 className={clsx(
-                  "flex flex-1 flex-col justify-center px-3 transition-opacity hover:opacity-80",
-                  FUNNEL_SEGMENT_CLASSES[index],
+                  "material-symbols-outlined absolute top-4 right-4 text-4xl opacity-10",
+                  kpi.tone === "error" && "text-error",
+                  kpi.tone === "success" && "text-green-700",
+                  kpi.tone === "default" && "text-primary",
                 )}
               >
-                <span className="text-[10px] font-bold uppercase opacity-80">
-                  {clientStatusLabel(status)}
-                </span>
-                <span className="text-body-md font-bold">{statusCounts.get(status) ?? 0}</span>
+                {kpi.icon}
+              </span>
+            </Link>
+          ))}
+        </section>
+
+        {/* Estado de cartera */}
+        <section className="card-premium rounded-xl p-6 lg:p-8">
+          <div className="mb-8 flex items-end justify-between">
+            <h3 className="text-xl font-semibold text-on-surface">Estado de Cartera</h3>
+            <Link
+              href="/clients"
+              className="flex items-center gap-2 text-xs font-bold tracking-widest text-primary uppercase hover:opacity-70"
+            >
+              Ver detalle <span className="material-symbols-outlined text-[16px]">north_east</span>
+            </Link>
+          </div>
+          <div className="flex h-3 w-full overflow-hidden rounded-full bg-surface-container-highest">
+            {FUNNEL_SEGMENTS.map((segment) => {
+              const count = statusCounts.get(segment.status) ?? 0;
+              const width = funnelTotal > 0 ? Math.max(count > 0 ? 4 : 0, (count / funnelTotal) * 100) : 25;
+
+              return (
+                <div
+                  key={segment.status}
+                  className={clsx("border-l border-white/20 transition-all first:border-l-0", segment.barClass)}
+                  style={{ width: `${width}%` }}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-6 grid grid-cols-4 text-center">
+            {FUNNEL_SEGMENTS.map((segment) => (
+              <Link key={segment.status} href={`/clients?status=${segment.status}`} className="space-y-1 hover:opacity-70">
+                <p className="text-[10px] font-bold tracking-wider text-on-surface-variant/80 uppercase">
+                  {segment.status === "en_seguimiento" ? "Seguimiento" : clientStatusLabel(segment.status)}
+                </p>
+                <p
+                  className={clsx(
+                    "text-lg font-bold",
+                    segment.status === "compro" ? "text-green-700" : "text-on-surface",
+                  )}
+                >
+                  {statusCounts.get(segment.status) ?? 0}
+                </p>
               </Link>
             ))}
           </div>
-          <p className="mt-3 text-label-sm text-on-surface-variant">
+          <p className="mt-4 text-center text-label-sm text-on-surface-variant/70">
             No interesados: {statusCounts.get("no_interesado") ?? 0} - Inactivos:{" "}
             {statusCounts.get("inactivo") ?? 0}
           </p>
         </section>
 
-        {/* Seguimientos de hoy (incluye vencidos) */}
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-headline-sm font-semibold">Para contactar</h3>
-            <Link href="/agenda" className="flex items-center gap-1 text-label-md font-semibold text-primary hover:underline">
-              Ver agenda completa
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        {/* Agenda de contactos */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-semibold text-on-surface">Agenda de Contactos</h3>
+            <Link
+              href="/agenda"
+              className="flex items-center gap-2 text-xs font-bold tracking-widest text-primary uppercase hover:underline"
+            >
+              Agenda completa <span className="material-symbols-outlined text-[16px]">calendar_month</span>
             </Link>
           </div>
 
           {pendingRows.length === 0 ? (
-            <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low/50 p-8 text-center">
-              <span className="material-symbols-outlined mb-2 text-4xl text-primary-container">task_alt</span>
-              <p className="font-semibold">No queda nada pendiente para hoy</p>
+            <div className="card-premium rounded-xl p-10 text-center">
+              <span className="material-symbols-outlined mb-2 text-4xl text-on-surface-variant/40">task_alt</span>
+              <p className="font-bold">No queda nada pendiente para hoy</p>
               <p className="text-body-md text-on-surface-variant">
                 Podes programar seguimientos desde la ficha de cada cliente.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-separate border-spacing-y-2 text-left">
+            <div className="overflow-x-auto border-t border-outline-variant/30">
+              <table className="w-full min-w-[860px]">
                 <thead>
-                  <tr className="bg-surface-container-low/50">
-                    <th className="rounded-l-lg px-4 py-3 text-label-md font-semibold text-on-surface-variant">Cliente</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Tipo</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Cuando</th>
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Objetivo</th>
-                    {profile.role === "admin" ? (
-                      <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Vendedor</th>
-                    ) : null}
-                    <th className="px-4 py-3 text-label-md font-semibold text-on-surface-variant">Estado</th>
-                    <th className="rounded-r-lg px-4 py-3 text-center text-label-md font-semibold text-on-surface-variant">
-                      Acciones
-                    </th>
+                  <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
+                    <th className="py-5 pr-4">Cliente</th>
+                    <th className="px-4 py-5">Canal</th>
+                    <th className="px-4 py-5">Programado</th>
+                    <th className="px-4 py-5">Objetivo de contacto</th>
+                    {profile.role === "admin" ? <th className="px-4 py-5">Asignado</th> : null}
+                    <th className="px-4 py-5">Prioridad</th>
+                    <th className="py-5 pl-4 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-outline-variant/20">
                   {pendingRows.map((row) => {
                     const client = row.clients;
                     const clientName = client
@@ -287,56 +330,86 @@ export default async function DashboardPage() {
                       .toUpperCase();
                     const overdue = row.scheduled_at < nowIso;
                     const isToday = row.scheduled_at >= startIso;
+                    const isWhatsapp = row.type === "whatsapp";
 
                     return (
-                      <tr key={row.id} className="group bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30">
-                        <td className="rounded-l-xl border-y border-l border-outline-variant/30 px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-xs font-bold text-primary">
+                      <tr key={row.id} className="group transition-colors hover:bg-surface-container-low">
+                        <td className="py-6 pr-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary-container/10 font-bold text-primary">
                               {clientInitials}
                             </div>
-                            {client ? (
-                              <Link href={`/clients/${client.id}`} className="font-bold hover:underline">
-                                {clientName}
-                              </Link>
-                            ) : (
-                              <span className="font-bold">{clientName}</span>
-                            )}
+                            <div className="min-w-0">
+                              {client ? (
+                                <Link
+                                  href={`/clients/${client.id}`}
+                                  className="block truncate text-base font-bold text-on-surface transition-colors group-hover:text-primary hover:underline"
+                                >
+                                  {clientName}
+                                </Link>
+                              ) : (
+                                <p className="truncate text-base font-bold">{clientName}</p>
+                              )}
+                              {client ? (
+                                <p className="text-xs text-on-surface-variant/70">
+                                  {clientStatusLabel(client.status)}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         </td>
-                        <td className="border-y border-outline-variant/30 px-4 py-3 text-body-md">
-                          {activityTypeLabel(row.type)}
+                        <td className="px-4 py-6">
+                          <div
+                            className={clsx(
+                              "flex items-center gap-2 text-sm font-medium",
+                              isWhatsapp ? "text-green-700" : "text-on-surface-variant",
+                            )}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              {CHANNEL_ICONS[row.type] ?? "event"}
+                            </span>
+                            {activityTypeLabel(row.type)}
+                          </div>
                         </td>
-                        <td
-                          className={clsx(
-                            "border-y border-outline-variant/30 px-4 py-3 font-bold",
-                            overdue ? "text-error" : "text-primary",
+                        <td className="px-4 py-6">
+                          {overdue ? (
+                            <>
+                              <p className="text-sm font-bold text-error">{formatDateTimeAr(row.scheduled_at)}</p>
+                              <p className="text-[10px] font-bold text-error/80 uppercase">
+                                {formatRelativeAr(row.scheduled_at)}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-sm font-bold text-on-surface">
+                              {isToday ? `Hoy, ${formatTimeAr(row.scheduled_at)}` : formatDateTimeAr(row.scheduled_at)}
+                            </p>
                           )}
-                        >
-                          {isToday ? `Hoy, ${formatTimeAr(row.scheduled_at)}` : formatDateTimeAr(row.scheduled_at)}
                         </td>
-                        <td className="max-w-56 truncate border-y border-outline-variant/30 px-4 py-3 text-body-md text-on-surface-variant">
-                          {row.objective ?? "-"}
+                        <td className="max-w-xs px-4 py-6">
+                          <p className="truncate text-sm leading-relaxed text-on-surface-variant/90 italic">
+                            {row.objective ? `"${row.objective}"` : "-"}
+                          </p>
                         </td>
                         {profile.role === "admin" ? (
-                          <td className="border-y border-outline-variant/30 px-4 py-3 text-body-md">
-                            {sellersById.get(row.assigned_user_id) ?? "-"}
+                          <td className="px-4 py-6">
+                            <span className="text-sm font-semibold text-on-surface">
+                              {sellersById.get(row.assigned_user_id) ?? "-"}
+                            </span>
                           </td>
                         ) : null}
-                        <td className="border-y border-outline-variant/30 px-4 py-3">
+                        <td className="px-4 py-6">
                           {overdue ? (
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-error">
-                              <span className="h-2 w-2 animate-pulse rounded-full bg-error" /> Vencido
+                            <span className="rounded border border-error/20 bg-error-container/20 px-2 py-1 text-[10px] font-bold tracking-wider text-error uppercase">
+                              Alta
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-orange-600">
-                              <span className="h-2 w-2 rounded-full bg-orange-600" />
-                              Pendiente
+                            <span className="rounded border border-outline-variant/40 bg-surface-container px-2 py-1 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">
+                              Normal
                             </span>
                           )}
                         </td>
-                        <td className="rounded-r-xl border-y border-r border-outline-variant/30 px-4 py-3">
-                          <div className="flex items-center justify-center gap-2">
+                        <td className="py-6 pl-4 text-right">
+                          <div className="flex justify-end gap-3 opacity-60 transition-opacity group-hover:opacity-100">
                             {client ? (
                               <>
                                 <a
@@ -344,16 +417,16 @@ export default async function DashboardPage() {
                                   target="_blank"
                                   rel="noreferrer"
                                   title="Abrir WhatsApp"
-                                  className="rounded-full bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
+                                  className="p-2 transition-colors hover:text-green-700"
                                 >
-                                  <span className="material-symbols-outlined text-base">chat</span>
+                                  <span className="material-symbols-outlined">send</span>
                                 </a>
                                 <Link
                                   href={`/clients/${client.id}`}
                                   title="Ver ficha"
-                                  className="rounded-full bg-surface-container p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                                  className="p-2 transition-colors hover:text-primary"
                                 >
-                                  <span className="material-symbols-outlined text-base">open_in_new</span>
+                                  <span className="material-symbols-outlined">visibility</span>
                                 </Link>
                               </>
                             ) : null}

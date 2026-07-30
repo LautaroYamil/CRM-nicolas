@@ -10,6 +10,8 @@ export type NavItem = {
   icon: string;
 };
 
+const FILLED_ICON = { fontVariationSettings: "'FILL' 1" } as const;
+
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") {
     return pathname === "/dashboard";
@@ -22,7 +24,7 @@ export function SidebarNavLinks({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex-1 space-y-1 overflow-y-auto">
+    <nav className="flex-1 space-y-1 overflow-y-auto px-4">
       {items.map((item) => {
         const active = isActive(pathname, item.href);
 
@@ -31,14 +33,16 @@ export function SidebarNavLinks({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={clsx(
-              "mx-3 flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200",
+              "flex items-center gap-3 rounded-lg border-l-4 px-4 py-3 transition-all duration-150",
               active
-                ? "bg-gradient-to-r from-primary-container to-primary font-bold text-on-primary-container shadow-lg shadow-primary/25"
-                : "text-secondary-fixed-dim opacity-70 hover:translate-x-0.5 hover:bg-white/5 hover:text-white hover:opacity-100",
+                ? "border-primary bg-surface-container-highest/30 font-bold text-on-surface"
+                : "border-transparent font-medium text-on-surface-variant hover:bg-surface-container/50 hover:text-primary",
             )}
           >
-            <span className="material-symbols-outlined">{item.icon}</span>
-            <span className="text-label-md font-semibold">{item.label}</span>
+            <span className="material-symbols-outlined" style={active ? FILLED_ICON : undefined}>
+              {item.icon}
+            </span>
+            <span className="text-body-md">{item.label}</span>
           </Link>
         );
       })}
@@ -65,9 +69,10 @@ export function BottomNavLinks({ items }: { items: NavItem[] }) {
           >
             <span
               className={clsx(
-                "material-symbols-outlined rounded-full px-4 py-0.5",
-                active && "bg-primary-fixed",
+                "material-symbols-outlined rounded-lg px-4 py-0.5",
+                active && "bg-surface-container-highest/60",
               )}
+              style={active ? FILLED_ICON : undefined}
             >
               {item.icon}
             </span>
