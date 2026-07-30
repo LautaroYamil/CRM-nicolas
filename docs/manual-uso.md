@@ -73,6 +73,12 @@ Al completar un seguimiento siempre te ofrece **agendar el siguiente en el mismo
 
 "Último contacto" y "Próximo seguimiento" del cliente se calculan solos a partir de las actividades; no hay que cargarlos a mano.
 
+## Mi perfil
+
+Tocando tu nombre (sidebar en PC, ícono de usuario en celular) cada uno accede a **Mi perfil**, donde puede:
+- **Poner su nombre real** — es el que aparece en el saludo del inicio ("Buenos días, Nico") y en el resto del CRM. Importante cuando se crea un usuario nuevo desde Supabase, porque de entrada el sistema le pone el nombre que tenga antes de la arroba del email.
+- **Cambiar su contraseña** en cualquier momento, sin depender del administrador.
+
 ## Roles
 
 - **Vendedor**: ve y gestiona sus propios clientes, su agenda y sus seguimientos.

@@ -44,17 +44,23 @@ export function AppShell({ profile, title, children }: AppShellProps) {
 
         <div className="mt-auto p-4">
           <div className="mt-4 flex items-center gap-3 border-t border-outline-variant/30 px-4 py-6">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container font-bold text-on-primary shadow-sm">
-              {initials}
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-bold text-on-surface">
-                {profile.full_name ?? "Sin nombre"}
-              </p>
-              <p className="text-[10px] tracking-wider text-on-surface-variant uppercase">
-                {profile.role === "admin" ? "Administrador" : "Vendedor"}
-              </p>
-            </div>
+            <Link
+              href="/profile"
+              title="Mi perfil"
+              className="flex flex-1 items-center gap-3 overflow-hidden transition-opacity hover:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-container font-bold text-on-primary shadow-sm">
+                {initials}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="truncate text-sm font-bold text-on-surface">
+                  {profile.full_name ?? "Sin nombre"}
+                </p>
+                <p className="text-[10px] tracking-wider text-on-surface-variant uppercase">
+                  {profile.role === "admin" ? "Administrador" : "Vendedor"}
+                </p>
+              </div>
+            </Link>
             <form action={logoutAction}>
               <button
                 type="submit"
@@ -96,15 +102,24 @@ export function AppShell({ profile, title, children }: AppShellProps) {
               <span className="material-symbols-outlined text-[20px]">person_add</span>
               <span className="hidden sm:inline">Nuevo cliente</span>
             </Link>
-            <form action={logoutAction} className="lg:hidden">
-              <button
-                type="submit"
-                title="Cerrar sesion"
-                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
+            <div className="flex items-center gap-3 lg:hidden">
+              <Link
+                href="/profile"
+                title="Mi perfil"
+                className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-primary"
               >
-                logout
-              </button>
-            </form>
+                account_circle
+              </Link>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  title="Cerrar sesion"
+                  className="material-symbols-outlined text-on-surface-variant transition-colors hover:text-error"
+                >
+                  logout
+                </button>
+              </form>
+            </div>
           </div>
         </header>
 
