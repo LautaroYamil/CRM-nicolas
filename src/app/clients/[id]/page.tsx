@@ -15,7 +15,9 @@ import {
   formatRelativeAr,
 } from "@/lib/crm/dates";
 import { buildMessageTemplates, waLink } from "@/lib/crm/whatsapp";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import type { Activity, ClientStatusChange } from "@/types/database";
+import { archiveClientAction, restoreClientAction } from "@/app/clients/actions";
 import {
   cancelActivityAction,
   completeActivityAction,
@@ -56,6 +58,7 @@ type ClientDetailRow = {
   last_contact_at: string | null;
   next_follow_up_at: string | null;
   created_at: string;
+  archived_at: string | null;
   client_interests: { interests: { name: string } | null }[];
 };
 
@@ -80,7 +83,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const { data: client } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, phone_raw, phone_normalized, locality, address, status, assigned_user_id, notes, last_contact_at, next_follow_up_at, created_at, client_interests(interests(name))",
+      "id, first_name, last_name, phone_raw, phone_normalized, locality, address, status, assigned_user_id, notes, last_contact_at, next_follow_up_at, created_at, archived_at, client_interests(interests(name))",
     )
     .eq("id", id)
     .single<ClientDetailRow>();
@@ -171,6 +174,23 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
         <p className="mb-4 rounded-xl border border-error/30 bg-error-container/40 px-4 py-3 text-body-md font-medium text-on-error-container">
           {errorMessage}
         </p>
+      ) : null}
+
+      {client.archived_at ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-error/30 bg-error-container/20 px-4 py-3">
+          <p className="text-body-md font-medium text-on-error-container">
+            Este cliente esta eliminado desde el {formatDateAr(client.archived_at)}. No aparece en el
+            directorio ni en la agenda.
+          </p>
+          <form action={restoreClientAction.bind(null, client.id, `/clients/${client.id}`)}>
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-4 py-2 text-xs font-bold tracking-widest text-on-primary uppercase transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+            >
+              Restaurar cliente
+            </button>
+          </form>
+        </div>
       ) : null}
 
       {/* Header */}
@@ -605,6 +625,24 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           </section>
         </aside>
       </div>
+
+      {!client.archived_at ? (
+        <section className="mt-6 rounded-xl border border-error/20 bg-error-container/10 p-5">
+          <h2 className="mb-1 text-label-md font-bold tracking-wider text-error uppercase">Zona de riesgo</h2>
+          <p className="mb-3 text-body-md text-on-surface-variant">
+            Eliminar oculta a {client.first_name} del directorio y de la agenda, y cancela sus seguimientos
+            pendientes. El historial se conserva y se puede restaurar despues desde la Papelera.
+          </p>
+          <form action={archiveClientAction.bind(null, client.id, "/clients")}>
+            <ConfirmSubmitButton
+              confirmMessage={`Eliminar a ${fullName}? Se cancelan sus seguimientos pendientes y se puede restaurar despues desde la Papelera.`}
+              className="rounded-lg border border-error/40 px-4 py-2 text-xs font-bold tracking-widest text-error uppercase transition-colors hover:bg-error/10"
+            >
+              Eliminar cliente
+            </ConfirmSubmitButton>
+          </form>
+        </section>
+      ) : null}
     </AppShell>
   );
 }

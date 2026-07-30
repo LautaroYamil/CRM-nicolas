@@ -165,3 +165,87 @@ export async function updateClientAction(clientId: string, formData: FormData) {
   revalidatePath(`/clients/${clientId}`);
   redirect(`/clients/${clientId}`);
 }
+
+/**
+ * "Eliminar" un cliente = archivarlo: desaparece del directorio, la agenda y el
+ * dashboard, pero el historial se conserva y se puede restaurar desde la Papelera.
+ * Sus seguimientos pendientes se cancelan para que no sigan apareciendo en la agenda.
+ */
+export async function archiveClientAction(clientId: string, redirectTo: string) {
+  const { supabase } = await getCurrentUserContext();
+
+  try {
+    const { error } = await supabase
+      .from("clients")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", clientId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const { error: cancelError } = await supabase
+      .from("activities")
+      .update({ status: "cancelada" })
+      .eq("client_id", clientId)
+      .eq("status", "pendiente");
+
+    if (cancelError) {
+      throw new Error(cancelError.message);
+    }
+  } catch (error) {
+    redirect(`${redirectTo}?error=${encodeURIComponent(toErrorMessage(error))}`);
+  }
+
+  revalidatePath("/clients");
+  revalidatePath("/clients/trash");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/agenda");
+  revalidatePath("/dashboard");
+  redirect(redirectTo);
+}
+
+export async function restoreClientAction(clientId: string, redirectTo: string) {
+  const { supabase } = await getCurrentUserContext();
+
+  try {
+    const { error } = await supabase
+      .from("clients")
+      .update({ archived_at: null })
+      .eq("id", clientId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    redirect(`${redirectTo}?error=${encodeURIComponent(toErrorMessage(error))}`);
+  }
+
+  revalidatePath("/clients");
+  revalidatePath("/clients/trash");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(redirectTo);
+}
+
+/** Borrado permanente e irreversible. Solo admin (tambien protegido por RLS). */
+export async function permanentlyDeleteClientAction(clientId: string) {
+  const { supabase, profile } = await getCurrentUserContext();
+
+  if (profile.role !== "admin") {
+    redirect("/clients/trash?error=Solo%20un%20administrador%20puede%20eliminar%20definitivamente");
+  }
+
+  try {
+    const { error } = await supabase.from("clients").delete().eq("id", clientId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    redirect(`/clients/trash?error=${encodeURIComponent(toErrorMessage(error))}`);
+  }
+
+  revalidatePath("/clients");
+  revalidatePath("/clients/trash");
+  redirect("/clients/trash");
+}

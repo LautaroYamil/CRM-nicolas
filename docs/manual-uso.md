@@ -52,6 +52,12 @@ La semana de un vistazo (lunes a sábado). Tarjetas azules = por venir; rojas = 
 ### Nuevo cliente
 Cargalo apenas se va del local. Lo mínimo: nombre y teléfono. Lo ideal: intereses (para poder filtrarlo después) y el **primer seguimiento** — si dejás la fecha, el cliente nace agendado y no depende de tu memoria.
 
+### Eliminar un cliente (distinto de "Inactivo")
+
+"Inactivo" es un estado comercial: el cliente sigue en el directorio, solo que se enfrió. **"Eliminar"** es otra cosa: saca al cliente del directorio, la agenda y el dashboard, y cancela sus seguimientos pendientes. Se hace desde el botón rojo al final de su ficha (o el ícono de tacho en el listado), pidiendo confirmación antes de aplicarlo.
+
+No se pierde nada: el cliente va a la **Papelera** (link arriba del directorio), desde donde se puede **restaurar** en cualquier momento. Solo el administrador puede **eliminar definitivamente** (ahí sí, sin vuelta atrás).
+
 ### Intereses (solo admin)
 El catálogo de rubros que los vendedores pueden marcar (living, colchones, comedor...). Desactivar un interés lo oculta para clientes nuevos sin borrar nada. Cargalos genéricos: "Sillones", no "sillón gris modelo X".
 

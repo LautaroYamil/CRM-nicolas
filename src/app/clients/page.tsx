@@ -1,6 +1,8 @@
 import Link from "next/link";
 import clsx from "clsx";
+import { archiveClientAction } from "@/app/clients/actions";
 import { AppShell } from "@/components/layout/app-shell";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { CLIENT_STATUS_OPTIONS, clientStatusLabel } from "@/lib/crm/constants";
 import { formatDateTimeAr, formatRelativeAr } from "@/lib/crm/dates";
@@ -150,13 +152,22 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   return (
     <AppShell profile={profile} title="Clientes">
       <div className="space-y-8">
-        <section>
-          <h1 className="text-headline-md font-bold tracking-tight lg:text-headline-xl">
-            Directorio de Clientes
-          </h1>
-          <p className="mt-1 font-medium text-on-surface-variant">
-            Gestiona y segmenta tu cartera de clientes.
-          </p>
+        <section className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-headline-md font-bold tracking-tight lg:text-headline-xl">
+              Directorio de Clientes
+            </h1>
+            <p className="mt-1 font-medium text-on-surface-variant">
+              Gestiona y segmenta tu cartera de clientes.
+            </p>
+          </div>
+          <Link
+            href="/clients/trash"
+            className="flex items-center gap-1.5 rounded-lg border border-outline-variant/40 px-3 py-2 text-xs font-bold tracking-wider text-on-surface-variant uppercase transition-colors hover:bg-surface-container"
+          >
+            <span className="material-symbols-outlined text-base">delete</span>
+            Papelera
+          </Link>
         </section>
 
         {/* Busqueda y filtros */}
@@ -316,6 +327,15 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     >
                       <span className="material-symbols-outlined text-[18px]">edit</span>
                     </Link>
+                    <form action={archiveClientAction.bind(null, client.id, "/clients")} className="contents">
+                      <ConfirmSubmitButton
+                        confirmMessage={`Eliminar a ${clientName}? Se cancelan sus seguimientos pendientes y se puede restaurar despues desde la Papelera.`}
+                        title="Eliminar"
+                        className="flex items-center justify-center rounded-lg border border-outline-variant/40 px-3 py-2 transition-colors hover:border-error/40 hover:text-error"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </ConfirmSubmitButton>
+                    </form>
                   </div>
                 </li>
               );
@@ -429,6 +449,15 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                           >
                             <span className="material-symbols-outlined">edit</span>
                           </Link>
+                          <form action={archiveClientAction.bind(null, client.id, "/clients")} className="contents">
+                            <ConfirmSubmitButton
+                              confirmMessage={`Eliminar a ${clientName}? Se cancelan sus seguimientos pendientes y se puede restaurar despues desde la Papelera.`}
+                              title="Eliminar"
+                              className="p-2 transition-colors hover:text-error"
+                            >
+                              <span className="material-symbols-outlined">delete</span>
+                            </ConfirmSubmitButton>
+                          </form>
                         </div>
                       </td>
                     </tr>
