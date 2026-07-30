@@ -94,7 +94,7 @@ export function AppShell({ profile, title, children }: AppShellProps) {
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] lg:px-6"
             >
               <span className="material-symbols-outlined text-[20px]">person_add</span>
-              <span className="hidden sm:inline">Nuevo contacto</span>
+              <span className="hidden sm:inline">Nuevo cliente</span>
             </Link>
             <form action={logoutAction} className="lg:hidden">
               <button
