@@ -146,13 +146,15 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           {kpis.map((kpi) => (
             <div
               key={kpi.label}
-              className="flex h-28 flex-col justify-between rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm lg:h-32 lg:p-6"
+              className="flex flex-col rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4 shadow-sm lg:p-5"
             >
-              <p className="text-label-sm tracking-wider text-on-surface-variant uppercase">{kpi.label}</p>
-              <div className="flex items-end justify-between">
-                <span className="text-headline-md font-bold">{kpi.value}</span>
-                <span className="material-symbols-outlined text-primary-container">{kpi.icon}</span>
-              </div>
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <span className="material-symbols-outlined">{kpi.icon}</span>
+              </span>
+              <span className="mt-3 text-3xl font-black tracking-tight">{kpi.value}</span>
+              <p className="mt-0.5 text-label-sm font-semibold tracking-wide text-on-surface-variant uppercase">
+                {kpi.label}
+              </p>
             </div>
           ))}
         </div>

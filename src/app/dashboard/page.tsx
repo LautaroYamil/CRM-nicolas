@@ -160,43 +160,47 @@ export default async function DashboardPage() {
               key={kpi.label}
               href={kpi.href}
               className={clsx(
-                "flex h-28 flex-col justify-between rounded-2xl border p-4 transition-shadow hover:shadow-md lg:h-32 lg:p-6",
-                kpi.tone === "error" && "border-error/20 bg-error-container/20",
-                kpi.tone === "success" && "border-green-200 bg-green-50",
-                kpi.tone === "default" && "border-outline-variant/30 bg-surface-container-lowest",
+                "group flex flex-col rounded-2xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg lg:p-5",
+                kpi.tone === "error" && "border-error/20 bg-error-container/20 hover:shadow-error/10",
+                kpi.tone === "success" && "border-green-200 bg-green-50 hover:shadow-green-600/10",
+                kpi.tone === "default" &&
+                  "border-outline-variant/30 bg-surface-container-lowest hover:shadow-primary/10",
               )}
             >
+              <div className="flex items-center justify-between">
+                <span
+                  className={clsx(
+                    "flex h-10 w-10 items-center justify-center rounded-xl",
+                    kpi.tone === "error" && "bg-error/10 text-error",
+                    kpi.tone === "success" && "bg-green-600/10 text-green-700",
+                    kpi.tone === "default" && "bg-primary/10 text-primary",
+                  )}
+                >
+                  <span className="material-symbols-outlined">{kpi.icon}</span>
+                </span>
+                <span className="material-symbols-outlined text-outline-variant opacity-0 transition-opacity group-hover:opacity-100">
+                  arrow_forward
+                </span>
+              </div>
+              <span
+                className={clsx(
+                  "mt-3 text-3xl font-black tracking-tight",
+                  kpi.tone === "error" && "text-error",
+                  kpi.tone === "success" && "text-green-800",
+                )}
+              >
+                {kpi.value}
+              </span>
               <p
                 className={clsx(
-                  "text-label-sm tracking-wider uppercase",
-                  kpi.tone === "error" && "font-bold text-error",
-                  kpi.tone === "success" && "font-bold text-green-700",
+                  "mt-0.5 text-label-sm font-semibold tracking-wide uppercase",
+                  kpi.tone === "error" && "text-error",
+                  kpi.tone === "success" && "text-green-700",
                   kpi.tone === "default" && "text-on-surface-variant",
                 )}
               >
                 {kpi.label}
               </p>
-              <div className="flex items-end justify-between">
-                <span
-                  className={clsx(
-                    "text-headline-md font-bold",
-                    kpi.tone === "error" && "text-error",
-                    kpi.tone === "success" && "text-green-800",
-                  )}
-                >
-                  {kpi.value}
-                </span>
-                <span
-                  className={clsx(
-                    "material-symbols-outlined",
-                    kpi.tone === "error" && "text-error",
-                    kpi.tone === "success" && "text-green-600",
-                    kpi.tone === "default" && "text-primary-container",
-                  )}
-                >
-                  {kpi.icon}
-                </span>
-              </div>
             </Link>
           ))}
         </div>

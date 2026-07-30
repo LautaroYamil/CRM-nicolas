@@ -31,10 +31,10 @@ export function SidebarNavLinks({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={clsx(
-              "mx-2 flex items-center gap-3 px-4 py-3 transition-colors duration-200",
+              "mx-3 flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200",
               active
-                ? "rounded-full bg-primary-container font-bold text-on-primary-container"
-                : "text-secondary-fixed-dim opacity-70 hover:bg-white/5 hover:text-white hover:opacity-100",
+                ? "bg-gradient-to-r from-primary-container to-primary font-bold text-on-primary-container shadow-lg shadow-primary/25"
+                : "text-secondary-fixed-dim opacity-70 hover:translate-x-0.5 hover:bg-white/5 hover:text-white hover:opacity-100",
             )}
           >
             <span className="material-symbols-outlined">{item.icon}</span>

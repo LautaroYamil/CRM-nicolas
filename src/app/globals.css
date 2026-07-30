@@ -69,9 +69,17 @@
   body {
     margin: 0;
     padding: 0;
-    background: var(--background);
+    background: linear-gradient(165deg, #f2f6fc 0%, #f7fafd 45%, #eef3fa 100%) fixed;
     color: var(--text);
     font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: #d8e2ff;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
   }
 
   /* Preflight de Tailwind resetea los headings; las paginas sin migrar dependen de estos tamanos */
