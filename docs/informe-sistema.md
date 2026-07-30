@@ -21,6 +21,7 @@ Lo que **no** hace (a propósito): no manda mensajes automáticos (el vendedor s
 | Autenticación | Supabase Auth | Login con email y contraseña |
 | Seguridad | Políticas RLS en la base | Cada vendedor solo puede ver/tocar SUS clientes; el admin ve todo. Se cumple a nivel base de datos: no se puede saltear desde el navegador |
 | Repositorio | github.com/LautaroYamil/CRM-nicolas | Código versionado |
+| Hosting | Vercel | La app en vivo; cada actualización se publica sola |
 
 Datos clave del modelo:
 - **Clientes**: nombre, teléfono (normalizado a formato argentino para WhatsApp), localidad, dirección, estado comercial, vendedor asignado, intereses, notas.
@@ -45,8 +46,9 @@ Puerta de entrada. Cada vendedor tiene su email y contraseña (los crea el admin
 **Para qué sirve: encontrar y segmentar la cartera.**
 
 - Búsqueda por nombre o teléfono, filtro por vendedor (admin) y **chips por estado** con conteos: un clic y ves "todos los interesados" para una promo, o "todos los que compraron" para posventa.
-- Cada fila muestra intereses, último contacto ("hace 2 días"), próximo seguimiento (rojo si venció) y estado. Acciones rápidas: WhatsApp, ver ficha, editar.
+- Cada fila muestra intereses, último contacto ("hace 2 días"), próximo seguimiento (rojo si venció) y estado. Acciones rápidas: WhatsApp, ver ficha, editar, **eliminar**.
 - Paginado de a 25 para cuando la cartera crezca.
+- **Papelera** (link arriba del directorio): los clientes eliminados, con opción de restaurarlos.
 
 ### 3.4 Ficha de cliente
 **Para qué sirve: es el puesto de trabajo del vendedor. El ciclo completo de un contacto pasa acá.**
@@ -55,6 +57,7 @@ Puerta de entrada. Cada vendedor tiene su email y contraseña (los crea el admin
 2. **Contactar**: botón WhatsApp (abre el chat directo), Llamar, o las **plantillas** — 4 mensajes prearmados (primer contacto, seguimiento, posventa, novedades) que se personalizan solos con el nombre del cliente y su interés; abren WhatsApp con el texto listo para que el vendedor lo revise y lo mande él. **Nada se envía automáticamente.**
 3. **Después**: "Registrar contacto" (qué se habló) con la opción de **agendar el próximo seguimiento en el mismo paso**.
 4. A la derecha, los **seguimientos pendientes** con Completar / Reprogramar / Cancelar.
+5. Al final, la **Zona de riesgo**: eliminar al cliente (lo saca del directorio y la agenda, cancela sus seguimientos pendientes, pero no borra el historial — se puede restaurar después desde la Papelera).
 
 ### 3.5 Agenda
 **Para qué sirve: organizar la semana y que nada se pase.**
@@ -78,6 +81,9 @@ Puerta de entrada. Cada vendedor tiene su email y contraseña (los crea el admin
 ### 3.8 Formulario de cliente (alta / edición)
 **Para qué sirve: capturar el contacto antes de que se enfríe.** Mínimo indispensable: nombre y teléfono. Ideal: intereses (chips de un toque) y el **primer seguimiento opcional en la misma pantalla** — si dejás fecha, el cliente nace agendado y no depende de la memoria de nadie. Al guardar te lleva directo a la ficha.
 
+### 3.9 Mi perfil
+**Para qué sirve: que cada uno maneje sus propios datos de acceso, sin depender del administrador.** Se entra tocando el propio nombre (sidebar en PC, ícono de usuario en celular). Ahí cada usuario pone su **nombre real** (el que aparece en el saludo del inicio y en todo el sistema) y puede **cambiar su contraseña** cuando quiera.
+
 ## 4. Conceptos clave (glosario)
 
 - **Estado comercial**: en qué punto de la compra está el cliente. Nuevo → Interesado → En seguimiento → Compró (más No interesado / Inactivo). Es la "foto" de la relación; alimenta el embudo, los filtros y los reportes.
@@ -86,6 +92,7 @@ Puerta de entrada. Cada vendedor tiene su email y contraseña (los crea el admin
 - **Vencido**: seguimiento pendiente cuya fecha y hora ya pasaron. Mismo criterio en todo el sistema.
 - **Cartera**: el conjunto de todos los clientes del negocio (o de un vendedor).
 - **Posventa**: seguimiento después de la compra (satisfacción, recompra, venta cruzada). Los que compraron no se abandonan.
+- **Eliminar vs. Inactivo**: no es lo mismo. "Inactivo" es un estado comercial — el cliente sigue en el directorio, solo que se enfrió. "Eliminar" lo saca del directorio, la agenda y el dashboard por completo, aunque queda recuperable en la Papelera.
 
 ## 5. Roles y permisos
 
@@ -94,19 +101,20 @@ Puerta de entrada. Cada vendedor tiene su email y contraseña (los crea el admin
 | Ver/editar clientes | Solo los suyos | Todos |
 | Agenda y reportes | Los propios | Globales + filtro por vendedor |
 | Reasignar clientes | No | Sí |
+| Eliminar / restaurar clientes | Los suyos | Todos |
+| Borrado definitivo (Papelera) | No | Sí |
 | Catálogo de intereses | Usa | Administra |
+| Su propio nombre y contraseña | Sí (Mi perfil) | Sí (Mi perfil) |
 | Crear usuarios | No | Sí (desde Supabase) |
 
 La restricción es real a nivel base de datos (RLS), no un ocultamiento visual.
 
 ## 6. Estado del proyecto y posibles mejoras
 
-**Terminado**: las 6 etapas del MVP (auth y roles → clientes e intereses → historial → agenda → contacto manual por WhatsApp → reportes y hardening) + rediseño visual completo.
+**Terminado**: las 6 etapas del MVP (auth y roles → clientes e intereses → historial → agenda → contacto manual por WhatsApp → reportes y hardening) + rediseño visual completo + eliminar/restaurar clientes + perfil de usuario. **La app ya está publicada** (Vercel) y se puede usar desde el celular en el local.
 
 **Pendiente de decisión** (no bloquea el uso):
-- **Deploy en hosting** (Vercel): hoy corre localmente; deployado, los vendedores lo usan desde el celular en el local.
-- Archivar clientes desde la interfaz.
-- Recupero de contraseña por email.
+- Recupero de contraseña por email (si alguien se olvida la contraseña *antes* de poder entrar, todavía depende del administrador).
 - Registro de compras con monto (para reportes de facturación).
 - Vista mensual de la agenda.
 - Pantalla de administración de vendedores (hoy se hace desde Supabase).
