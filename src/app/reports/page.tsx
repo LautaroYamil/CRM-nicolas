@@ -101,6 +101,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
     .filter((row) => row.newClients + row.done + row.sales + row.pending > 0)
     .sort((a, b) => b.sales - a.sales || b.done - a.done);
 
+  const maxSellerSales = Math.max(1, ...perSeller.map((row) => row.sales));
+
   const kpis = [
     { label: "Clientes nuevos", value: newClients.length, icon: "person_add" },
     { label: "Contactos realizados", value: doneActivities.length, icon: "task_alt" },
@@ -161,6 +163,38 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
             </div>
           ))}
         </div>
+
+        {profile.role === "admin" && perSeller.length > 0 ? (
+          <section className="card-premium rounded-xl p-5 lg:p-8">
+            <h2 className="mb-1 text-headline-sm font-bold">Ventas por vendedor</h2>
+            <p className="mb-5 text-body-md text-on-surface-variant">
+              Quien esta convirtiendo mas en el periodo elegido.
+            </p>
+            <ul className="space-y-3">
+              {perSeller.map((row) => (
+                <li key={row.name} className="group flex items-center gap-3">
+                  <span
+                    className="w-24 shrink-0 truncate text-body-md font-semibold text-on-surface sm:w-32"
+                    title={row.name}
+                  >
+                    {row.name}
+                  </span>
+                  <div className="h-5 flex-1 overflow-hidden rounded bg-surface-container transition-colors group-hover:bg-surface-container-high">
+                    <div
+                      className="h-full rounded-r bg-primary-container transition-[width]"
+                      style={{
+                        width: `${row.sales > 0 ? Math.max(4, (row.sales / maxSellerSales) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="w-6 shrink-0 text-right text-body-md font-bold text-on-surface [font-variant-numeric:tabular-nums]">
+                    {row.sales}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {profile.role === "admin" && perSeller.length > 0 ? (
           <section className="card-premium rounded-xl p-5 lg:p-8">

@@ -50,3 +50,8 @@ export const completeActivitySchema = z.object({
 export const rescheduleActivitySchema = z.object({
   scheduledAt: dateTimeLocalValue,
 });
+
+export const inviteSellerSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Email invalido"),
+  fullName: z.string().trim().min(1, "El nombre es obligatorio"),
+});

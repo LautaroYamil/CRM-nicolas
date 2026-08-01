@@ -18,7 +18,10 @@ export function AppShell({ profile, title, children }: AppShellProps) {
     { label: "Agenda", href: "/agenda", icon: "calendar_today" },
     { label: "Reportes", href: "/reports", icon: "analytics" },
     ...(profile.role === "admin"
-      ? [{ label: "Intereses", href: "/admin/interests", icon: "favorite" }]
+      ? [
+          { label: "Intereses", href: "/admin/interests", icon: "favorite" },
+          { label: "Equipo", href: "/admin/users", icon: "manage_accounts" },
+        ]
       : []),
   ];
 

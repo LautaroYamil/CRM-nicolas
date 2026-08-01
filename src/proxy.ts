@@ -16,6 +16,9 @@ export async function proxy(request: NextRequest) {
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    // Cookie de sesion (sin maxAge): se borra al cerrar el navegador en vez de
+    // persistir ~1 anio, para que cada apertura nueva del navegador pida login.
+    cookieOptions: { maxAge: undefined },
     cookies: {
       getAll() {
         return request.cookies.getAll();
