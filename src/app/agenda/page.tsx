@@ -6,7 +6,7 @@ import {
 } from "@/app/clients/[id]/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
-import { activityTypeLabel } from "@/lib/crm/constants";
+import { activityTypeIcon, activityTypeLabel } from "@/lib/crm/constants";
 import {
   argDateStringOf,
   argMonthYearLabel,
@@ -16,15 +16,6 @@ import {
   formatRelativeAr,
   formatTimeAr,
 } from "@/lib/crm/dates";
-
-const ACTIVITY_ICONS: Record<string, string> = {
-  llamada: "call",
-  whatsapp: "chat",
-  email: "mail",
-  visita: "storefront",
-  reunion: "groups",
-  nota: "sticky_note_2",
-};
 
 type AgendaRow = {
   id: string;
@@ -246,7 +237,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
           </div>
 
           {/* Vista mobile: lista vertical de dias, sin scroll horizontal */}
-          <div className="space-y-3 lg:hidden">
+          <div className="space-y-3 xl:hidden">
             {week.map((day) => {
               const dayRows = rowsByDay.get(day.dateStr) ?? [];
 
@@ -302,7 +293,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                                   )}
                                 >
                                   <span className="material-symbols-outlined text-xs">
-                                    {ACTIVITY_ICONS[row.type] ?? "event"}
+                                    {activityTypeIcon(row.type)}
                                   </span>
                                   {activityTypeLabel(row.type)}
                                 </p>
@@ -325,7 +316,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
             })}
           </div>
 
-          <div className="card-premium hidden overflow-x-auto rounded-xl p-3 lg:block">
+          <div className="card-premium hidden overflow-x-auto rounded-xl p-3 xl:block">
             <div className="grid min-w-[720px] grid-cols-6 gap-2">
               {week.map((day) => {
                 const dayRows = rowsByDay.get(day.dateStr) ?? [];
@@ -373,7 +364,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                               )}
                             >
                               <span className="material-symbols-outlined text-xs">
-                                {ACTIVITY_ICONS[row.type] ?? "event"}
+                                {activityTypeIcon(row.type)}
                               </span>
                               {activityTypeLabel(row.type)}
                             </p>

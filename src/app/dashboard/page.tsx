@@ -2,7 +2,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
-import { activityTypeLabel, clientStatusLabel } from "@/lib/crm/constants";
+import { activityTypeIcon, activityTypeLabel, clientStatusLabel } from "@/lib/crm/constants";
 import {
   argGreeting,
   argTodayRange,
@@ -27,15 +27,6 @@ type PendingRow = {
     phone_normalized: string;
     status: string;
   } | null;
-};
-
-const CHANNEL_ICONS: Record<string, string> = {
-  llamada: "call",
-  whatsapp: "chat",
-  email: "mail",
-  visita: "storefront",
-  reunion: "groups",
-  nota: "sticky_note_2",
 };
 
 const FUNNEL_SEGMENTS = [
@@ -305,7 +296,7 @@ export default async function DashboardPage() {
           ) : (
             <>
             {/* Tarjetas (celular) */}
-            <ul className="space-y-3 lg:hidden">
+            <ul className="space-y-3 xl:hidden">
               {pendingRows.map((row) => {
                 const client = row.clients;
                 const clientName = client ? `${client.first_name} ${client.last_name ?? ""}`.trim() : "Cliente";
@@ -375,7 +366,7 @@ export default async function DashboardPage() {
             </ul>
 
             {/* Tabla (desktop) */}
-            <div className="hidden overflow-x-auto border-t border-outline-variant/30 lg:block">
+            <div className="hidden overflow-x-auto border-t border-outline-variant/30 xl:block">
               <table className="w-full min-w-[860px]">
                 <thead>
                   <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
@@ -438,7 +429,7 @@ export default async function DashboardPage() {
                             )}
                           >
                             <span className="material-symbols-outlined text-[18px]">
-                              {CHANNEL_ICONS[row.type] ?? "event"}
+                              {activityTypeIcon(row.type)}
                             </span>
                             {activityTypeLabel(row.type)}
                           </div>

@@ -5,7 +5,9 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import {
   ACTIVITY_TYPE_OPTIONS,
+  activityTypeIcon,
   activityTypeLabel,
+  clientStatusChipClasses,
   clientStatusLabel,
 } from "@/lib/crm/constants";
 import {
@@ -25,24 +27,6 @@ import {
   rescheduleActivityAction,
   scheduleFollowUpAction,
 } from "./actions";
-
-const ACTIVITY_ICONS: Record<string, string> = {
-  llamada: "call",
-  whatsapp: "chat",
-  email: "mail",
-  visita: "storefront",
-  reunion: "groups",
-  nota: "sticky_note_2",
-};
-
-const STATUS_CHIP_CLASSES: Record<string, string> = {
-  nuevo: "border-outline-variant/40 bg-surface-container text-on-surface",
-  interesado: "border-yellow-600/20 bg-yellow-50 text-yellow-800",
-  en_seguimiento: "border-orange-600/20 bg-orange-50 text-orange-700",
-  compro: "border-green-600/20 bg-green-50 text-green-700",
-  no_interesado: "border-error/20 bg-error-container/20 text-error",
-  inactivo: "border-outline-variant/40 bg-surface-container-high text-on-surface-variant",
-};
 
 type ClientDetailRow = {
   id: string;
@@ -122,7 +106,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     ...historyActivities.map((activity) => ({
       key: `activity-${activity.id}`,
       at: activity.completed_at ?? activity.updated_at,
-      icon: activity.status === "realizada" ? (ACTIVITY_ICONS[activity.type] ?? "event") : "block",
+      icon: activity.status === "realizada" ? activityTypeIcon(activity.type) : "block",
       iconClasses:
         activity.status === "realizada"
           ? "bg-primary-fixed text-primary"
@@ -206,7 +190,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 <span
                   className={clsx(
                     "rounded-full px-3 py-1 text-[11px] font-bold uppercase",
-                    STATUS_CHIP_CLASSES[client.status] ?? "bg-surface-container text-on-surface-variant",
+                    clientStatusChipClasses(client.status),
                   )}
                 >
                   {clientStatusLabel(client.status)}
@@ -503,7 +487,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                     >
                       <p className="flex items-center gap-2 font-bold">
                         <span className="material-symbols-outlined text-lg">
-                          {ACTIVITY_ICONS[activity.type] ?? "event"}
+                          {activityTypeIcon(activity.type)}
                         </span>
                         {activityTypeLabel(activity.type)}
                       </p>

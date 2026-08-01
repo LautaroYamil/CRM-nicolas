@@ -4,7 +4,7 @@ import { archiveClientAction } from "@/app/clients/actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
-import { CLIENT_STATUS_OPTIONS, clientStatusLabel } from "@/lib/crm/constants";
+import { CLIENT_STATUS_OPTIONS, clientStatusChipClasses, clientStatusLabel } from "@/lib/crm/constants";
 import { formatDateTimeAr, formatRelativeAr } from "@/lib/crm/dates";
 
 const PAGE_SIZE = 25;
@@ -39,15 +39,6 @@ type ClientsPageProps = {
     seller?: string;
     page?: string;
   }>;
-};
-
-const STATUS_CHIP_CLASSES: Record<string, string> = {
-  nuevo: "border-outline-variant/40 bg-surface-container text-on-surface",
-  interesado: "border-yellow-600/20 bg-yellow-50 text-yellow-800",
-  en_seguimiento: "border-orange-600/20 bg-orange-50 text-orange-700",
-  compro: "border-green-600/20 bg-green-50 text-green-700",
-  no_interesado: "border-error/20 bg-error-container/20 text-error",
-  inactivo: "border-outline-variant/40 bg-surface-container-high text-on-surface-variant",
 };
 
 function buildQuery(params: Record<string, string | undefined>) {
@@ -258,7 +249,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         ) : (
           <>
           {/* Tarjetas (celular) */}
-          <ul className="space-y-3 lg:hidden">
+          <ul className="space-y-3 xl:hidden">
             {(clients ?? []).map((client) => {
               const clientName = `${client.first_name} ${client.last_name ?? ""}`.trim();
               const interests = interestsByClient.get(client.id) ?? [];
@@ -280,8 +271,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     <span
                       className={clsx(
                         "shrink-0 rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
-                        STATUS_CHIP_CLASSES[client.status] ??
-                          "border-outline-variant/40 bg-surface-container text-on-surface-variant",
+                        clientStatusChipClasses(client.status),
                       )}
                     >
                       {clientStatusLabel(client.status)}
@@ -343,7 +333,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           </ul>
 
           {/* Tabla (desktop) */}
-          <div className="hidden overflow-x-auto border-t border-outline-variant/30 lg:block">
+          <div className="hidden overflow-x-auto border-t border-outline-variant/30 xl:block">
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
@@ -412,8 +402,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                         <span
                           className={clsx(
                             "inline-block rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
-                            STATUS_CHIP_CLASSES[client.status] ??
-                              "border-outline-variant/40 bg-surface-container text-on-surface-variant",
+                            clientStatusChipClasses(client.status),
                           )}
                         >
                           {clientStatusLabel(client.status)}
