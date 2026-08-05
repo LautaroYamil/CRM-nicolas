@@ -155,7 +155,7 @@ function InterestRow({
         <div>
           <p className="font-bold">{name}</p>
           <Link
-            href="/clients"
+            href={`/clients?interest=${id}`}
             className="text-label-sm text-on-surface-variant hover:text-primary hover:underline"
           >
             {usageCount} {usageCount === 1 ? "cliente" : "clientes"} con este interes

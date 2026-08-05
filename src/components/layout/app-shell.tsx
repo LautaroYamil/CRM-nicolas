@@ -33,7 +33,7 @@ export function AppShell({ profile, title, children }: AppShellProps) {
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background text-on-surface">
+    <div className="min-h-screen overflow-x-hidden bg-background text-on-surface">
       {/* Sidebar (desktop) */}
       <aside className="fixed top-0 left-0 z-50 hidden h-full w-[260px] flex-col border-r border-outline-variant/30 bg-surface-container-low lg:flex">
         <div className="px-8 py-10">

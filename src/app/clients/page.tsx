@@ -32,11 +32,17 @@ type SellerRow = {
   full_name: string | null;
 };
 
+type InterestOption = {
+  id: string;
+  name: string;
+};
+
 type ClientsPageProps = {
   searchParams: Promise<{
     search?: string;
     status?: string;
     seller?: string;
+    interest?: string;
     page?: string;
   }>;
 };
@@ -87,12 +93,31 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     query = query.eq("assigned_user_id", params.seller);
   }
 
-  const [{ data: clients, count: totalFiltered, error }, { data: statusRows }, { data: sellerRows }] =
-    await Promise.all([
-      query.returns<ClientRow[]>(),
-      supabase.from("clients").select("status").is("archived_at", null).limit(2000).returns<{ status: string }[]>(),
-      supabase.from("profiles").select("id, full_name").eq("active", true).returns<SellerRow[]>(),
-    ]);
+  if (params.interest) {
+    const { data: matchingInterestRows } = await supabase
+      .from("client_interests")
+      .select("client_id")
+      .eq("interest_id", params.interest)
+      .returns<{ client_id: string }[]>();
+
+    const matchingClientIds = (matchingInterestRows ?? []).map((row) => row.client_id);
+    query = query.in(
+      "id",
+      matchingClientIds.length > 0 ? matchingClientIds : ["00000000-0000-0000-0000-000000000000"],
+    );
+  }
+
+  const [
+    { data: clients, count: totalFiltered, error },
+    { data: statusRows },
+    { data: sellerRows },
+    { data: interestOptions },
+  ] = await Promise.all([
+    query.returns<ClientRow[]>(),
+    supabase.from("clients").select("status").is("archived_at", null).limit(2000).returns<{ status: string }[]>(),
+    supabase.from("profiles").select("id, full_name").eq("active", true).returns<SellerRow[]>(),
+    supabase.from("interests").select("id, name").eq("active", true).order("name").returns<InterestOption[]>(),
+  ]);
 
   if (error) {
     return (
@@ -138,7 +163,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const hasNext = showingTo < total;
   const nowIso = new Date().toISOString();
 
-  const baseParams = { search: search || undefined, seller: params.seller };
+  const baseParams = { search: search || undefined, seller: params.seller, interest: params.interest };
 
   return (
     <AppShell profile={profile} title="Clientes">
@@ -191,6 +216,18 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                 ))}
               </select>
             ) : null}
+            <select
+              name="interest"
+              defaultValue={params.interest ?? ""}
+              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-4 py-2.5 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+            >
+              <option value="">Todos los intereses</option>
+              {(interestOptions ?? []).map((interest) => (
+                <option key={interest.id} value={interest.id}>
+                  {interest.name}
+                </option>
+              ))}
+            </select>
             <button
               type="submit"
               className="rounded-lg bg-primary px-6 py-2.5 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"

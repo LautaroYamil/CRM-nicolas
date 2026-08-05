@@ -178,7 +178,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
       ) : null}
       <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         {/* Calendario semanal */}
-        <div>
+        <div className="min-w-0">
           <div className="mb-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h1 className="text-headline-md font-bold capitalize lg:text-headline-lg">
