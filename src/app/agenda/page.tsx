@@ -211,6 +211,16 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
               </div>
             </div>
 
+            {overdue.length > 0 ? (
+              <a
+                href="#vencidos"
+                className="inline-flex w-fit items-center gap-2 rounded-lg border border-error/30 bg-error-container/30 px-3 py-1.5 text-xs font-bold text-on-error-container transition-colors hover:bg-error-container/50"
+              >
+                <span className="material-symbols-outlined text-base text-error">warning</span>
+                {overdue.length} {overdue.length === 1 ? "vencido" : "vencidos"}
+              </a>
+            ) : null}
+
             {profile.role === "admin" ? (
               <form method="get" className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="week" value={String(weekOffset)} />
@@ -446,7 +456,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
             )}
           </section>
 
-          <section className="card-premium rounded-xl p-5">
+          <section id="vencidos" className="scroll-mt-24 card-premium rounded-xl p-5">
             <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
               <span className="material-symbols-outlined text-error">warning</span>
               Vencidos

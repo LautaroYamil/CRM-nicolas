@@ -14,6 +14,8 @@ type ClientRow = {
   first_name: string;
   last_name: string | null;
   phone_raw: string;
+  dni: string | null;
+  birth_date: string | null;
   locality: string | null;
   address: string | null;
   status: "nuevo" | "interesado" | "en_seguimiento" | "compro" | "no_interesado" | "inactivo";
@@ -28,7 +30,9 @@ export default async function EditClientPage({ params, searchParams }: EditClien
   const [{ data: client }, { data: sellers }, { data: interests }, { data: selectedInterests }] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, first_name, last_name, phone_raw, locality, address, status, assigned_user_id, notes")
+      .select(
+        "id, first_name, last_name, phone_raw, dni, birth_date, locality, address, status, assigned_user_id, notes",
+      )
       .eq("id", id)
       .single<ClientRow>(),
     supabase
@@ -69,6 +73,8 @@ export default async function EditClientPage({ params, searchParams }: EditClien
           firstName: client.first_name,
           lastName: client.last_name ?? "",
           phone: client.phone_raw,
+          dni: client.dni ?? "",
+          birthDate: client.birth_date ?? "",
           locality: client.locality ?? "",
           address: client.address ?? "",
           status: client.status,

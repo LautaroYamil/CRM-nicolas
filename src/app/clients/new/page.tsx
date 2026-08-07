@@ -43,6 +43,8 @@ export default async function NewClientPage({ searchParams }: NewClientPageProps
           firstName: "",
           lastName: "",
           phone: "",
+          dni: "",
+          birthDate: "",
           locality: "",
           address: "",
           status: "nuevo",

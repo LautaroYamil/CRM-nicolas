@@ -128,14 +128,21 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   }
 
   const clientIds = (clients ?? []).map((client) => client.id);
-  const { data: interestRows } =
+  const [{ data: interestRows }, { data: purchaseRows }] =
     clientIds.length > 0
-      ? await supabase
-          .from("client_interests")
-          .select("client_id, interests(name)")
-          .in("client_id", clientIds)
-          .returns<InterestRow[]>()
-      : { data: [] as InterestRow[] };
+      ? await Promise.all([
+          supabase
+            .from("client_interests")
+            .select("client_id, interests(name)")
+            .in("client_id", clientIds)
+            .returns<InterestRow[]>(),
+          supabase
+            .from("client_purchases")
+            .select("client_id")
+            .in("client_id", clientIds)
+            .returns<{ client_id: string }[]>(),
+        ])
+      : [{ data: [] as InterestRow[] }, { data: [] as { client_id: string }[] }];
 
   const sellersById = new Map((sellerRows ?? []).map((seller) => [seller.id, seller.full_name ?? "Vendedor"]));
 
@@ -148,6 +155,11 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     const existing = interestsByClient.get(row.client_id) ?? [];
     existing.push(row.interests.name);
     interestsByClient.set(row.client_id, existing);
+  }
+
+  const purchaseCountByClient = new Map<string, number>();
+  for (const row of purchaseRows ?? []) {
+    purchaseCountByClient.set(row.client_id, (purchaseCountByClient.get(row.client_id) ?? 0) + 1);
   }
 
   const statusCounts = new Map<string, number>();
@@ -290,6 +302,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
             {(clients ?? []).map((client) => {
               const clientName = `${client.first_name} ${client.last_name ?? ""}`.trim();
               const interests = interestsByClient.get(client.id) ?? [];
+              const purchaseCount = purchaseCountByClient.get(client.id) ?? 0;
               const followUpOverdue =
                 client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
 
@@ -305,14 +318,21 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                         {client.locality ? ` - ${client.locality}` : ""}
                       </p>
                     </div>
-                    <span
-                      className={clsx(
-                        "shrink-0 rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
-                        clientStatusChipClasses(client.status),
-                      )}
-                    >
-                      {clientStatusLabel(client.status)}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span
+                        className={clsx(
+                          "rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
+                          clientStatusChipClasses(client.status),
+                        )}
+                      >
+                        {clientStatusLabel(client.status)}
+                      </span>
+                      {purchaseCount >= 2 ? (
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold tracking-wider text-on-primary uppercase">
+                          Frecuente
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="mt-2 space-y-0.5 text-sm">
                     <p className="text-on-surface-variant">
@@ -320,6 +340,9 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     </p>
                     <p className={clsx(followUpOverdue ? "font-bold text-error" : "text-on-surface-variant")}>
                       Proximo: {formatDateTimeAr(client.next_follow_up_at)}
+                    </p>
+                    <p className="text-on-surface-variant">
+                      Compras: <span className="font-semibold">{purchaseCount}</span>
                     </p>
                     {interests.length > 0 ? (
                       <p className="truncate text-on-surface-variant">{interests.join(", ")}</p>
@@ -379,6 +402,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                   <th className="px-4 py-5">Ultimo contacto</th>
                   <th className="px-4 py-5">Proximo seguimiento</th>
                   <th className="px-4 py-5">Estado</th>
+                  <th className="px-4 py-5">Compras</th>
                   {profile.role === "admin" ? <th className="px-4 py-5">Vendedor</th> : null}
                   <th className="py-5 pl-4 text-right">Acciones</th>
                 </tr>
@@ -393,6 +417,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     .join("")
                     .toUpperCase();
                   const interests = interestsByClient.get(client.id) ?? [];
+                  const purchaseCount = purchaseCountByClient.get(client.id) ?? 0;
                   const followUpOverdue =
                     client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
 
@@ -444,6 +469,16 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                         >
                           {clientStatusLabel(client.status)}
                         </span>
+                      </td>
+                      <td className="px-4 py-5 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{purchaseCount}</span>
+                          {purchaseCount >= 2 ? (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold tracking-wider text-on-primary uppercase">
+                              Frecuente
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       {profile.role === "admin" ? (
                         <td className="px-4 py-5 text-sm font-semibold">

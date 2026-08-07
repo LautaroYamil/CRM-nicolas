@@ -16,6 +16,8 @@ type ClientFormValues = {
   firstName: string;
   lastName: string;
   phone: string;
+  dni: string;
+  birthDate: string;
   locality: string;
   address: string;
   status: ClientStatus;
@@ -103,6 +105,25 @@ export function ClientForm({
                 defaultValue={values.phone}
                 required
                 placeholder="Ej: 11 2345 6789"
+                className={inputClasses}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClasses}>DNI</span>
+              <input
+                name="dni"
+                inputMode="numeric"
+                defaultValue={values.dni}
+                placeholder="Ej: 30123456"
+                className={inputClasses}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClasses}>Fecha de nacimiento</span>
+              <input
+                type="date"
+                name="birthDate"
+                defaultValue={values.birthDate}
                 className={inputClasses}
               />
             </label>

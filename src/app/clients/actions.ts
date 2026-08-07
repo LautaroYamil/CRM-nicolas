@@ -14,6 +14,8 @@ function formDataToClientPayload(formData: FormData) {
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName") || "",
     phone: formData.get("phone"),
+    dni: formData.get("dni") || "",
+    birthDate: formData.get("birthDate") || "",
     locality: formData.get("locality") || "",
     address: formData.get("address") || "",
     status: formData.get("status"),
@@ -31,6 +33,34 @@ function toErrorMessage(error: unknown) {
   return "No se pudo procesar la solicitud";
 }
 
+/** Supabase client generico: evita acoplar este helper al tipo devuelto por getCurrentUserContext. */
+type SupabaseClientLike = Awaited<ReturnType<typeof getCurrentUserContext>>["supabase"];
+
+async function assertDniAvailable(supabase: SupabaseClientLike, dni: string, excludeClientId?: string) {
+  if (!dni) {
+    return;
+  }
+
+  let query = supabase
+    .from("clients")
+    .select("id, first_name, last_name")
+    .eq("dni", dni)
+    .is("archived_at", null)
+    .limit(1);
+
+  if (excludeClientId) {
+    query = query.neq("id", excludeClientId);
+  }
+
+  const { data } = await query.returns<{ id: string; first_name: string; last_name: string | null }[]>();
+  const existing = data?.[0];
+
+  if (existing) {
+    const name = `${existing.first_name} ${existing.last_name ?? ""}`.trim();
+    throw new Error(`Ya existe un cliente con ese DNI: ${name}`);
+  }
+}
+
 export async function createClientAction(formData: FormData) {
   const { supabase, user, profile } = await getCurrentUserContext();
   let createdClientId: string | null = null;
@@ -40,6 +70,8 @@ export async function createClientAction(formData: FormData) {
     const assignedUserId = profile.role === "admin" ? payload.assignedUserId : user.id;
     const normalizedPhone = normalizePhoneForStorage(payload.phone);
 
+    await assertDniAvailable(supabase, payload.dni);
+
     const { data: insertedClient, error } = await supabase
       .from("clients")
       .insert({
@@ -47,6 +79,8 @@ export async function createClientAction(formData: FormData) {
         last_name: payload.lastName || null,
         phone_raw: payload.phone,
         phone_normalized: normalizedPhone,
+        dni: payload.dni || null,
+        birth_date: payload.birthDate || null,
         locality: payload.locality || null,
         address: payload.address || null,
         status: payload.status,
@@ -117,6 +151,8 @@ export async function updateClientAction(clientId: string, formData: FormData) {
     const assignedUserId = profile.role === "admin" ? payload.assignedUserId : user.id;
     const normalizedPhone = normalizePhoneForStorage(payload.phone);
 
+    await assertDniAvailable(supabase, payload.dni, clientId);
+
     const { error: updateError } = await supabase
       .from("clients")
       .update({
@@ -124,6 +160,8 @@ export async function updateClientAction(clientId: string, formData: FormData) {
         last_name: payload.lastName || null,
         phone_raw: payload.phone,
         phone_normalized: normalizedPhone,
+        dni: payload.dni || null,
+        birth_date: payload.birthDate || null,
         locality: payload.locality || null,
         address: payload.address || null,
         status: payload.status,

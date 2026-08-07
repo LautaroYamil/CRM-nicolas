@@ -14,6 +14,7 @@ import {
   defaultFollowUpLocalValue,
   formatDateAr,
   formatDateTimeAr,
+  formatPlainDateAr,
   formatRelativeAr,
 } from "@/lib/crm/dates";
 import { buildMessageTemplates, waLink } from "@/lib/crm/whatsapp";
@@ -23,7 +24,9 @@ import { archiveClientAction, restoreClientAction } from "@/app/clients/actions"
 import {
   cancelActivityAction,
   completeActivityAction,
+  deletePurchaseAction,
   logContactAction,
+  registerPurchaseAction,
   rescheduleActivityAction,
   scheduleFollowUpAction,
 } from "./actions";
@@ -34,6 +37,8 @@ type ClientDetailRow = {
   last_name: string | null;
   phone_raw: string;
   phone_normalized: string;
+  dni: string | null;
+  birth_date: string | null;
   locality: string | null;
   address: string | null;
   status: string;
@@ -44,6 +49,11 @@ type ClientDetailRow = {
   created_at: string;
   archived_at: string | null;
   client_interests: { interests: { name: string } | null }[];
+};
+
+type PurchaseRow = {
+  id: string;
+  purchased_at: string;
 };
 
 type ClientDetailPageProps = {
@@ -67,7 +77,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const { data: client } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, phone_raw, phone_normalized, locality, address, status, assigned_user_id, notes, last_contact_at, next_follow_up_at, created_at, archived_at, client_interests(interests(name))",
+      "id, first_name, last_name, phone_raw, phone_normalized, dni, birth_date, locality, address, status, assigned_user_id, notes, last_contact_at, next_follow_up_at, created_at, archived_at, client_interests(interests(name))",
     )
     .eq("id", id)
     .single<ClientDetailRow>();
@@ -76,21 +86,31 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     notFound();
   }
 
-  const [{ data: activities }, { data: statusChanges }, { data: sellerRows }] = await Promise.all([
-    supabase
-      .from("activities")
-      .select("*")
-      .eq("client_id", id)
-      .order("scheduled_at", { ascending: true })
-      .returns<Activity[]>(),
-    supabase
-      .from("client_status_changes")
-      .select("*")
-      .eq("client_id", id)
-      .order("created_at", { ascending: false })
-      .returns<ClientStatusChange[]>(),
-    supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
-  ]);
+  const [{ data: activities }, { data: statusChanges }, { data: sellerRows }, { data: purchases }] =
+    await Promise.all([
+      supabase
+        .from("activities")
+        .select("*")
+        .eq("client_id", id)
+        .order("scheduled_at", { ascending: true })
+        .returns<Activity[]>(),
+      supabase
+        .from("client_status_changes")
+        .select("*")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false })
+        .returns<ClientStatusChange[]>(),
+      supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
+      supabase
+        .from("client_purchases")
+        .select("id, purchased_at")
+        .eq("client_id", id)
+        .order("purchased_at", { ascending: false })
+        .returns<PurchaseRow[]>(),
+    ]);
+
+  const purchaseCount = (purchases ?? []).length;
+  const isFrequentClient = purchaseCount >= 2;
 
   const sellersById = new Map((sellerRows ?? []).map((seller) => [seller.id, seller.full_name ?? "Vendedor"]));
   const sellerName = sellersById.get(client.assigned_user_id) ?? "Vendedor";
@@ -101,6 +121,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const nowIso = new Date().toISOString();
   const pendingActivities = (activities ?? []).filter((activity) => activity.status === "pendiente");
   const historyActivities = (activities ?? []).filter((activity) => activity.status !== "pendiente");
+  const overdueCount = pendingActivities.filter((activity) => activity.scheduled_at < nowIso).length;
 
   const timeline: TimelineEvent[] = [
     ...historyActivities.map((activity) => ({
@@ -237,7 +258,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           </div>
         </div>
 
-        <dl className="mt-5 grid grid-cols-1 gap-3 border-t border-outline-variant/30 pt-4 sm:grid-cols-3">
+        <dl className="mt-5 grid grid-cols-1 gap-3 border-t border-outline-variant/30 pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-label-sm tracking-wider text-on-surface-variant uppercase">Ultimo contacto</dt>
             <dd className="m-0 text-body-lg font-bold">{formatRelativeAr(client.last_contact_at)}</dd>
@@ -257,12 +278,23 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             <dt className="text-label-sm tracking-wider text-on-surface-variant uppercase">Cliente desde</dt>
             <dd className="m-0 text-body-lg font-bold">{formatDateAr(client.created_at)}</dd>
           </div>
+          <div>
+            <dt className="text-label-sm tracking-wider text-on-surface-variant uppercase">Compras</dt>
+            <dd className="m-0 flex items-center gap-2 text-body-lg font-bold">
+              {purchaseCount}
+              {isFrequentClient ? (
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-on-primary uppercase">
+                  Frecuente
+                </span>
+              ) : null}
+            </dd>
+          </div>
         </dl>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_320px]">
         {/* Columna izquierda: datos */}
-        <aside className="space-y-6">
+        <aside className="order-2 space-y-6 xl:order-none">
           <section className="card-premium rounded-xl p-5">
             <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
               Contacto
@@ -282,6 +314,18 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 <li className="flex items-center gap-3">
                   <span className="material-symbols-outlined text-primary">home</span>
                   <span className="text-body-md font-medium">{client.address}</span>
+                </li>
+              ) : null}
+              {client.dni ? (
+                <li className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary">badge</span>
+                  <span className="text-body-md font-medium">DNI {client.dni}</span>
+                </li>
+              ) : null}
+              {client.birth_date ? (
+                <li className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary">cake</span>
+                  <span className="text-body-md font-medium">{formatPlainDateAr(client.birth_date)}</span>
                 </li>
               ) : null}
             </ul>
@@ -312,6 +356,49 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             )}
           </section>
 
+          <section className="card-premium rounded-xl p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
+                Compras ({purchaseCount})
+              </h2>
+              <form action={registerPurchaseAction.bind(null, client.id, `/clients/${client.id}`)}>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold tracking-wider text-on-primary uppercase transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+                >
+                  <span className="material-symbols-outlined text-base">add_shopping_cart</span>
+                  Sumar compra
+                </button>
+              </form>
+            </div>
+            {isFrequentClient ? (
+              <p className="mb-3 text-body-md font-semibold text-primary">Cliente frecuente</p>
+            ) : null}
+            {(purchases ?? []).length === 0 ? (
+              <p className="text-body-md text-on-surface-variant">Todavia no compro nada.</p>
+            ) : (
+              <ul className="space-y-2">
+                {(purchases ?? []).map((purchase) => (
+                  <li
+                    key={purchase.id}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-low/60 px-3 py-2"
+                  >
+                    <span className="text-body-md font-medium">{formatDateAr(purchase.purchased_at)}</span>
+                    <form action={deletePurchaseAction.bind(null, purchase.id, client.id, `/clients/${client.id}`)}>
+                      <ConfirmSubmitButton
+                        confirmMessage="Quitar esta compra del historial?"
+                        title="Quitar"
+                        className="p-1 text-on-surface-variant transition-colors hover:text-error"
+                      >
+                        <span className="material-symbols-outlined text-base">close</span>
+                      </ConfirmSubmitButton>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           {client.notes ? (
             <section className="card-premium rounded-xl p-5">
               <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
@@ -323,7 +410,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
         </aside>
 
         {/* Columna central: registrar + historial */}
-        <div className="space-y-6">
+        <div className="order-3 space-y-6 xl:order-none">
           <section className="card-premium rounded-xl p-5">
             <h2 className="mb-1 text-headline-sm font-bold">Registrar contacto</h2>
             <p className="mb-4 text-body-md text-on-surface-variant">
@@ -457,10 +544,15 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
         </div>
 
         {/* Columna derecha: pendientes + programar */}
-        <aside className="space-y-6 lg:col-span-2 xl:col-span-1">
+        <aside className="order-1 space-y-6 lg:col-span-2 xl:order-none xl:col-span-1">
           <section className="card-premium rounded-xl p-5">
-            <h2 className="mb-4 text-headline-sm font-bold">
+            <h2 className="mb-4 flex flex-wrap items-center gap-2 text-headline-sm font-bold">
               Pendientes ({pendingActivities.length})
+              {overdueCount > 0 ? (
+                <span className="rounded-full bg-error px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-white uppercase">
+                  {overdueCount} {overdueCount === 1 ? "vencido" : "vencidos"}
+                </span>
+              ) : null}
             </h2>
             {pendingActivities.length === 0 ? (
               <p className="text-body-md text-on-surface-variant">

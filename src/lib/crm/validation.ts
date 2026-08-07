@@ -6,10 +6,22 @@ const statusValues = CLIENT_STATUS_OPTIONS.map((item) => item.value) as [
   ...(typeof CLIENT_STATUS_OPTIONS)[number]["value"][],
 ];
 
+const plainDateValue = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha invalida");
+
+const dniValue = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/\D+/g, ""))
+  .refine((value) => value === "" || (value.length >= 6 && value.length <= 9), {
+    message: "El DNI debe tener entre 6 y 9 numeros",
+  });
+
 export const clientFormSchema = z.object({
   firstName: z.string().trim().min(1, "El nombre es obligatorio"),
   lastName: z.string().trim().optional(),
   phone: z.string().trim().min(1, "El telefono es obligatorio"),
+  dni: dniValue,
+  birthDate: plainDateValue.optional().or(z.literal("")),
   locality: z.string().trim().optional(),
   address: z.string().trim().optional(),
   status: z.enum(statusValues),

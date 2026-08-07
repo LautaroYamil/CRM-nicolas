@@ -183,6 +183,16 @@ export function isoDaysAgo(days: number, reference: Date = new Date()) {
   return new Date(reference.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+/** Formatea una fecha simple "YYYY-MM-DD" (sin hora) como DD/MM/YYYY, sin pasar por Date/timezone. */
+export function formatPlainDateAr(dateStr: string | null | undefined) {
+  if (!dateStr) {
+    return "-";
+  }
+
+  const [year, month, day] = dateStr.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 /** Valor por defecto para inputs datetime-local: manana a las 10:00 hora argentina. */
 export function defaultFollowUpLocalValue(reference: Date = new Date()) {
   const day = currentArgDateString(new Date(reference.getTime() + 24 * 60 * 60 * 1000));

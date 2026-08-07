@@ -250,3 +250,40 @@ export async function cancelActivityAction(activityId: string, clientId: string,
   revalidateClientViews(clientId);
   redirect(redirectTo);
 }
+
+export async function registerPurchaseAction(clientId: string, redirectTo: string) {
+  const { supabase, user } = await getCurrentUserContext();
+
+  try {
+    const { error } = await supabase.from("client_purchases").insert({
+      client_id: clientId,
+      created_by: user.id,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    redirect(withError(redirectTo, toErrorMessage(error)));
+  }
+
+  revalidateClientViews(clientId);
+  redirect(redirectTo);
+}
+
+export async function deletePurchaseAction(purchaseId: string, clientId: string, redirectTo: string) {
+  const { supabase } = await getCurrentUserContext();
+
+  try {
+    const { error } = await supabase.from("client_purchases").delete().eq("id", purchaseId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } catch (error) {
+    redirect(withError(redirectTo, toErrorMessage(error)));
+  }
+
+  revalidateClientViews(clientId);
+  redirect(redirectTo);
+}
