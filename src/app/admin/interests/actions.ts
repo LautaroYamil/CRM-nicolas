@@ -21,10 +21,40 @@ export async function createInterestAction(formData: FormData) {
     redirect("/admin/interests?error=El%20nombre%20del%20interes%20es%20obligatorio");
   }
 
+  // Busqueda case-insensitive: evita duplicados tipo "Sillones" / "sillones",
+  // y detecta si ya existe pero esta desactivado (oculto en la seccion colapsada).
+  const { data: existing } = await supabase
+    .from("interests")
+    .select("id, name, active")
+    .ilike("name", name)
+    .maybeSingle<{ id: string; name: string; active: boolean }>();
+
+  if (existing) {
+    if (existing.active) {
+      redirect(
+        `/admin/interests?error=${encodeURIComponent(`Ya existe un interes llamado "${existing.name}"`)}`,
+      );
+    }
+
+    const { error: reactivateError } = await supabase
+      .from("interests")
+      .update({ active: true })
+      .eq("id", existing.id);
+
+    if (reactivateError) {
+      redirect(`/admin/interests?error=${encodeURIComponent(reactivateError.message)}`);
+    }
+
+    revalidatePath("/admin/interests");
+    redirect("/admin/interests");
+  }
+
   const { error } = await supabase.from("interests").insert({ name, active: true });
 
   if (error) {
-    redirect(`/admin/interests?error=${encodeURIComponent(error.message)}`);
+    const message =
+      error.code === "23505" ? `Ya existe un interes llamado "${name}"` : error.message;
+    redirect(`/admin/interests?error=${encodeURIComponent(message)}`);
   }
 
   revalidatePath("/admin/interests");
