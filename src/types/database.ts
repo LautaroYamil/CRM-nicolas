@@ -27,10 +27,29 @@ export interface Activity {
   completed_at: string | null;
   objective: string | null;
   outcome: string | null;
+  outcome_type: string | null;
   rescheduled_count: number;
   created_by: string;
   created_at: string;
   updated_at: string;
+  cancelled_via_archive: boolean;
+}
+
+export interface ClientPurchase {
+  id: string;
+  client_id: string;
+  purchased_at: string;
+  description: string | null;
+  interest_id: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ContactObjective {
+  id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
 }
 
 export interface ClientStatusChange {

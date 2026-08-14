@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import clsx from "clsx";
-import { inviteSellerAction, toggleUserActiveAction, updateUserRoleAction } from "./actions";
+import { inviteSellerAction, reassignClientsAction, toggleUserActiveAction, updateUserRoleAction } from "./actions";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -54,6 +54,20 @@ export default async function UsersAdminPage({ searchParams }: UsersPageProps) {
     // Sin SUPABASE_SERVICE_ROLE_KEY configurada: se pierde el email en la lista,
     // pero el resto de la gestion (rol, activo) sigue funcionando.
   }
+
+  // Cuantos clientes activos (no archivados) tiene cada uno hoy, para saber
+  // si tiene sentido ofrecer "Reasignar cartera" al lado de su fila.
+  const clientCountsById = new Map<string, number>();
+  await Promise.all(
+    (profiles ?? []).map(async (row) => {
+      const { count } = await supabase
+        .from("clients")
+        .select("id", { count: "exact", head: true })
+        .eq("assigned_user_id", row.id)
+        .is("archived_at", null);
+      clientCountsById.set(row.id, count ?? 0);
+    }),
+  );
 
   return (
     <AppShell profile={currentProfile} title="Equipo">
@@ -139,6 +153,9 @@ export default async function UsersAdminPage({ searchParams }: UsersPageProps) {
                     <p className="truncate text-label-sm text-on-surface-variant">
                       {emailsById.get(row.id) ?? "-"}
                     </p>
+                    <p className="text-label-sm text-on-surface-variant">
+                      {clientCountsById.get(row.id) ?? 0} clientes activos
+                    </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -190,6 +207,35 @@ export default async function UsersAdminPage({ searchParams }: UsersPageProps) {
                             {row.active ? "Desactivar" : "Reactivar"}
                           </button>
                         </form>
+                        {(clientCountsById.get(row.id) ?? 0) > 0 ? (
+                          <form action={reassignClientsAction} className="flex items-center gap-1.5">
+                            <input type="hidden" name="fromUserId" value={row.id} />
+                            <select
+                              name="toUserId"
+                              required
+                              defaultValue=""
+                              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-2 py-2 text-[11px] font-semibold focus:ring-1 focus:ring-primary focus:outline-none"
+                            >
+                              <option value="" disabled>
+                                Reasignar a...
+                              </option>
+                              {(profiles ?? [])
+                                .filter((other) => other.id !== row.id)
+                                .map((other) => (
+                                  <option key={other.id} value={other.id}>
+                                    {other.full_name ?? "Sin nombre"}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              type="submit"
+                              title="Reasignar toda la cartera activa a otro vendedor"
+                              className="rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-3 py-2 text-[11px] font-bold tracking-wider text-on-surface-variant uppercase transition-colors hover:bg-surface-container"
+                            >
+                              Reasignar cartera
+                            </button>
+                          </form>
+                        ) : null}
                       </>
                     ) : null}
                   </div>

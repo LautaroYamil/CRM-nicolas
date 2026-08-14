@@ -13,7 +13,7 @@ export default async function NewClientPage({ searchParams }: NewClientPageProps
   const params = await searchParams;
   const { supabase, user, profile } = await getCurrentUserContext();
 
-  const [{ data: sellers }, { data: interests }] = await Promise.all([
+  const [{ data: sellers }, { data: interests }, { data: lossReasons }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name")
@@ -21,6 +21,7 @@ export default async function NewClientPage({ searchParams }: NewClientPageProps
       .in("role", ["seller", "admin"])
       .order("full_name"),
     supabase.from("interests").select("id, name, active").order("name"),
+    supabase.from("loss_reasons").select("id, name, active").order("name"),
   ]);
 
   const availableSellers = (sellers ?? []).length > 0 ? sellers ?? [] : [{ id: user.id, full_name: profile.full_name }];
@@ -36,6 +37,7 @@ export default async function NewClientPage({ searchParams }: NewClientPageProps
         action={createClientAction}
         sellers={availableSellers}
         interests={interests ?? []}
+        lossReasons={lossReasons ?? []}
         isAdmin={profile.role === "admin"}
         errorMessage={params.error}
         withFirstFollowUp
@@ -49,6 +51,7 @@ export default async function NewClientPage({ searchParams }: NewClientPageProps
           address: "",
           status: "nuevo",
           assignedUserId: defaultSellerId,
+          lossReasonId: "",
           notes: "",
           interestIds: [],
         }}

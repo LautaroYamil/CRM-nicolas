@@ -28,6 +28,21 @@ export const ACTIVITY_STATUS_LABELS = {
 
 export type ActivityStatus = keyof typeof ACTIVITY_STATUS_LABELS;
 
+export const CONTACT_OUTCOME_OPTIONS = [
+  { value: "respondio_sigue_interesado", label: "Respondio - sigue interesado" },
+  { value: "respondio_quiere_pensarlo", label: "Respondio - quiere pensarlo" },
+  { value: "pidio_contacto_despues", label: "Pidio que lo contacten despues" },
+  { value: "no_respondio", label: "No respondio" },
+  { value: "no_interesado", label: "No interesado" },
+  { value: "venta_concretada", label: "Venta concretada" },
+] as const;
+
+export type ContactOutcome = (typeof CONTACT_OUTCOME_OPTIONS)[number]["value"];
+
+export function contactOutcomeLabel(value: string | null | undefined) {
+  return CONTACT_OUTCOME_OPTIONS.find((option) => option.value === value)?.label ?? null;
+}
+
 export function activityTypeLabel(type: string) {
   return ACTIVITY_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
 }

@@ -9,6 +9,7 @@ import {
   activityTypeLabel,
   clientStatusChipClasses,
   clientStatusLabel,
+  contactOutcomeLabel,
 } from "@/lib/crm/constants";
 import {
   defaultFollowUpLocalValue,
@@ -18,6 +19,8 @@ import {
   formatRelativeAr,
 } from "@/lib/crm/dates";
 import { buildMessageTemplates, waLink } from "@/lib/crm/whatsapp";
+import { isOverdue } from "@/lib/crm/overdue";
+import { OutcomeTypeSelect } from "@/components/crm/outcome-type-select";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import type { Activity, ClientStatusChange } from "@/types/database";
 import { archiveClientAction, restoreClientAction } from "@/app/clients/actions";
@@ -43,6 +46,8 @@ type ClientDetailRow = {
   address: string | null;
   status: string;
   assigned_user_id: string;
+  loss_reason_id: string | null;
+  loss_reasons: { name: string } | null;
   notes: string | null;
   last_contact_at: string | null;
   next_follow_up_at: string | null;
@@ -54,12 +59,62 @@ type ClientDetailRow = {
 type PurchaseRow = {
   id: string;
   purchased_at: string;
+  description: string | null;
+  interests: { name: string } | null;
+};
+
+type ObjectiveOption = {
+  id: string;
+  name: string;
+};
+
+type InterestOption = {
+  id: string;
+  name: string;
 };
 
 type ClientDetailPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    warning?: string;
+    dupId?: string;
+    dupName?: string;
+    dupStatus?: string;
+  }>;
 };
+
+function ObjectivePicker({
+  choiceName,
+  textName,
+  options,
+}: {
+  choiceName: string;
+  textName: string;
+  options: ObjectiveOption[];
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <select
+        name={choiceName}
+        defaultValue="otro"
+        className="rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+      >
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.name}
+          </option>
+        ))}
+        <option value="otro">Otro (especificar)</option>
+      </select>
+      <input
+        name={textName}
+        placeholder="Si elegiste Otro, escribi el objetivo"
+        className="rounded-xl border border-outline-variant px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+      />
+    </div>
+  );
+}
 
 type TimelineEvent = {
   key: string;
@@ -71,13 +126,14 @@ type TimelineEvent = {
 };
 
 export default async function ClientDetailPage({ params, searchParams }: ClientDetailPageProps) {
-  const [{ id }, { error: errorMessage }] = await Promise.all([params, searchParams]);
+  const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
+  const { error: errorMessage, warning, dupId, dupName, dupStatus } = resolvedSearchParams;
   const { supabase, profile } = await getCurrentUserContext();
 
   const { data: client } = await supabase
     .from("clients")
     .select(
-      "id, first_name, last_name, phone_raw, phone_normalized, dni, birth_date, locality, address, status, assigned_user_id, notes, last_contact_at, next_follow_up_at, created_at, archived_at, client_interests(interests(name))",
+      "id, first_name, last_name, phone_raw, phone_normalized, dni, birth_date, locality, address, status, assigned_user_id, loss_reason_id, loss_reasons(name), notes, last_contact_at, next_follow_up_at, created_at, archived_at, client_interests(interests(name))",
     )
     .eq("id", id)
     .single<ClientDetailRow>();
@@ -86,34 +142,56 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
     notFound();
   }
 
-  const [{ data: activities }, { data: statusChanges }, { data: sellerRows }, { data: purchases }] =
-    await Promise.all([
-      supabase
-        .from("activities")
-        .select("*")
-        .eq("client_id", id)
-        .order("scheduled_at", { ascending: true })
-        .returns<Activity[]>(),
-      supabase
-        .from("client_status_changes")
-        .select("*")
-        .eq("client_id", id)
-        .order("created_at", { ascending: false })
-        .returns<ClientStatusChange[]>(),
-      supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
-      supabase
-        .from("client_purchases")
-        .select("id, purchased_at")
-        .eq("client_id", id)
-        .order("purchased_at", { ascending: false })
-        .returns<PurchaseRow[]>(),
-    ]);
+  const [
+    { data: activities },
+    { data: statusChanges },
+    { data: sellerRows },
+    { data: purchases },
+    { data: objectiveOptions },
+    { data: interestCatalog },
+  ] = await Promise.all([
+    supabase
+      .from("activities")
+      .select("*")
+      .eq("client_id", id)
+      .order("scheduled_at", { ascending: true })
+      .returns<Activity[]>(),
+    supabase
+      .from("client_status_changes")
+      .select("*")
+      .eq("client_id", id)
+      .order("created_at", { ascending: false })
+      .returns<ClientStatusChange[]>(),
+    supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
+    supabase
+      .from("client_purchases")
+      .select("id, purchased_at, description, interests(name)")
+      .eq("client_id", id)
+      .order("purchased_at", { ascending: false })
+      .returns<PurchaseRow[]>(),
+    supabase
+      .from("contact_objectives")
+      .select("id, name")
+      .eq("active", true)
+      .order("name")
+      .returns<ObjectiveOption[]>(),
+    supabase
+      .from("interests")
+      .select("id, name")
+      .eq("active", true)
+      .order("name")
+      .returns<InterestOption[]>(),
+  ]);
 
   const purchaseCount = (purchases ?? []).length;
   const isFrequentClient = purchaseCount >= 2;
 
   const sellersById = new Map((sellerRows ?? []).map((seller) => [seller.id, seller.full_name ?? "Vendedor"]));
   const sellerName = sellersById.get(client.assigned_user_id) ?? "Vendedor";
+  // Las plantillas se firman con el vendedor ASIGNADO al cliente, no con quien
+  // tiene la sesion abierta -si un admin abre la ficha de un vendedor distinto,
+  // el mensaje tiene que decir el nombre real del responsable de ese cliente.
+  const assignedSellerFirstName = sellerName.split(/\s+/)[0] || "el equipo";
   const interests = client.client_interests
     .map((row) => row.interests?.name)
     .filter((name): name is string => Boolean(name));
@@ -121,7 +199,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const nowIso = new Date().toISOString();
   const pendingActivities = (activities ?? []).filter((activity) => activity.status === "pendiente");
   const historyActivities = (activities ?? []).filter((activity) => activity.status !== "pendiente");
-  const overdueCount = pendingActivities.filter((activity) => activity.scheduled_at < nowIso).length;
+  const overdueCount = pendingActivities.filter((activity) => isOverdue(activity.scheduled_at, nowIso)).length;
 
   const timeline: TimelineEvent[] = [
     ...historyActivities.map((activity) => ({
@@ -134,7 +212,9 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           : "bg-surface-container-high text-on-surface-variant",
       title:
         activity.status === "realizada"
-          ? `${activityTypeLabel(activity.type)} realizada`
+          ? `${activityTypeLabel(activity.type)} realizada${
+              activity.outcome_type ? ` - ${contactOutcomeLabel(activity.outcome_type)}` : ""
+            }`
           : `${activityTypeLabel(activity.type)} cancelada`,
       detail: activity.outcome ?? activity.objective,
     })),
@@ -161,7 +241,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
   const defaultFollowUp = defaultFollowUpLocalValue();
   const messageTemplates = buildMessageTemplates({
     clientFirstName: client.first_name,
-    sellerName: (profile.full_name ?? "").split(/\s+/)[0] || "el equipo",
+    sellerName: assignedSellerFirstName,
     interest: interests[0],
   });
 
@@ -179,6 +259,29 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
         <p className="mb-4 rounded-xl border border-error/30 bg-error-container/40 px-4 py-3 text-body-md font-medium text-on-error-container">
           {errorMessage}
         </p>
+      ) : null}
+
+      {warning === "phone_duplicate" ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-yellow-600/30 bg-yellow-50 px-4 py-3">
+          <p className="text-body-md font-medium text-yellow-800">
+            Este telefono ya estaba registrado: <strong>{dupName}</strong>
+            {dupStatus ? ` (${clientStatusLabel(dupStatus)})` : ""}. Fijate si no es la misma persona.
+          </p>
+          {dupId ? (
+            <Link href={`/clients/${dupId}`} className="shrink-0 text-label-md font-bold text-primary hover:underline">
+              Ver ficha
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+
+      {warning === "phone_duplicate_other_seller" ? (
+        <div className="mb-4 rounded-xl border border-yellow-600/30 bg-yellow-50 px-4 py-3">
+          <p className="text-body-md font-medium text-yellow-800">
+            Este telefono ya esta registrado, pero pertenece a otro vendedor. Consultale al admin si te
+            parece que puede ser el mismo cliente.
+          </p>
+        </div>
       ) : null}
 
       {client.archived_at ? (
@@ -216,6 +319,11 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 >
                   {clientStatusLabel(client.status)}
                 </span>
+                {client.status === "no_interesado" && client.loss_reasons?.name ? (
+                  <span className="rounded-full border border-error/30 bg-error-container/20 px-3 py-1 text-[11px] font-bold text-error uppercase">
+                    Motivo: {client.loss_reasons.name}
+                  </span>
+                ) : null}
               </div>
               <p className="text-body-md text-on-surface-variant">
                 Vendedor: <span className="font-semibold">{sellerName}</span>
@@ -268,7 +376,9 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             <dd
               className={clsx(
                 "m-0 text-body-lg font-bold",
-                client.next_follow_up_at && client.next_follow_up_at < nowIso ? "text-error" : "text-primary",
+                client.next_follow_up_at && isOverdue(client.next_follow_up_at, nowIso)
+                  ? "text-error"
+                  : "text-primary",
               )}
             >
               {formatDateTimeAr(client.next_follow_up_at)}
@@ -357,44 +467,75 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
           </section>
 
           <section className="card-premium rounded-xl p-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
-                Compras ({purchaseCount})
-              </h2>
-              <form action={registerPurchaseAction.bind(null, client.id, `/clients/${client.id}`)}>
+            <h2 className="mb-3 text-label-md font-bold tracking-wider text-on-surface-variant uppercase">
+              Compras ({purchaseCount})
+            </h2>
+            {isFrequentClient ? (
+              <p className="mb-3 text-body-md font-semibold text-primary">Cliente frecuente</p>
+            ) : null}
+            <form
+              action={registerPurchaseAction.bind(null, client.id, `/clients/${client.id}`)}
+              className="mb-4 space-y-2 rounded-xl border border-outline-variant/40 p-3"
+            >
+              <input
+                name="description"
+                placeholder="Que compro? (ej: Juego de living 3 cuerpos)"
+                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  name="interestId"
+                  defaultValue=""
+                  className="flex-1 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                >
+                  <option value="">Rubro (opcional)</option>
+                  {(interestCatalog ?? []).map((interest) => (
+                    <option key={interest.id} value={interest.id}>
+                      {interest.name}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold tracking-wider text-on-primary uppercase transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+                  className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold tracking-wider text-on-primary uppercase transition-all hover:bg-on-surface-variant active:scale-[0.98]"
                 >
                   <span className="material-symbols-outlined text-base">add_shopping_cart</span>
                   Sumar compra
                 </button>
-              </form>
-            </div>
-            {isFrequentClient ? (
-              <p className="mb-3 text-body-md font-semibold text-primary">Cliente frecuente</p>
-            ) : null}
+              </div>
+            </form>
             {(purchases ?? []).length === 0 ? (
               <p className="text-body-md text-on-surface-variant">Todavia no compro nada.</p>
             ) : (
               <ul className="space-y-2">
-                {(purchases ?? []).map((purchase) => (
-                  <li
-                    key={purchase.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-low/60 px-3 py-2"
-                  >
-                    <span className="text-body-md font-medium">{formatDateAr(purchase.purchased_at)}</span>
-                    <form action={deletePurchaseAction.bind(null, purchase.id, client.id, `/clients/${client.id}`)}>
-                      <ConfirmSubmitButton
-                        confirmMessage="Quitar esta compra del historial?"
-                        title="Quitar"
-                        className="p-1 text-on-surface-variant transition-colors hover:text-error"
-                      >
-                        <span className="material-symbols-outlined text-base">close</span>
-                      </ConfirmSubmitButton>
-                    </form>
-                  </li>
-                ))}
+                {(purchases ?? []).map((purchase) => {
+                  const purchaseDetail = [purchase.description, purchase.interests?.name]
+                    .filter(Boolean)
+                    .join(" - ");
+
+                  return (
+                    <li
+                      key={purchase.id}
+                      className="flex items-start justify-between gap-2 rounded-lg bg-surface-container-low/60 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-body-md font-medium">{formatDateAr(purchase.purchased_at)}</span>
+                        {purchaseDetail ? (
+                          <p className="truncate text-label-sm text-on-surface-variant">{purchaseDetail}</p>
+                        ) : null}
+                      </div>
+                      <form action={deletePurchaseAction.bind(null, purchase.id, client.id, `/clients/${client.id}`)}>
+                        <ConfirmSubmitButton
+                          confirmMessage="Quitar esta compra del historial?"
+                          title="Quitar"
+                          className="shrink-0 p-1 text-on-surface-variant transition-colors hover:text-error"
+                        >
+                          <span className="material-symbols-outlined text-base">close</span>
+                        </ConfirmSubmitButton>
+                      </form>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>
@@ -425,6 +566,9 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                   placeholder="Que se hablo? Que quedo pendiente?"
                   className="w-full resize-y border-none bg-transparent text-body-lg focus:ring-0 focus:outline-none"
                 />
+                <div className="mt-3 border-t border-outline-variant/30 pt-3">
+                  <OutcomeTypeSelect name="outcomeType" />
+                </div>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/30 pt-3">
                   <select
                     name="type"
@@ -449,16 +593,16 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 <summary className="cursor-pointer text-label-md font-semibold text-primary">
                   Programar proximo seguimiento en el mismo paso (opcional)
                 </summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 space-y-2">
                   <input
                     type="datetime-local"
                     name="nextScheduledAt"
-                    className="rounded-xl border border-outline-variant px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    className="w-full rounded-xl border border-outline-variant px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
                   />
-                  <input
-                    name="nextObjective"
-                    placeholder="Objetivo del proximo contacto"
-                    className="rounded-xl border border-outline-variant px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  <ObjectivePicker
+                    choiceName="nextObjectiveChoice"
+                    textName="nextObjective"
+                    options={objectiveOptions ?? []}
                   />
                 </div>
               </details>
@@ -561,7 +705,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             ) : (
               <ul className="space-y-3">
                 {pendingActivities.map((activity) => {
-                  const overdue = activity.scheduled_at < nowIso;
+                  const overdue = isOverdue(activity.scheduled_at, nowIso);
                   const fichaPath = `/clients/${client.id}`;
                   const completeAction = completeActivityAction.bind(null, activity.id, client.id, fichaPath);
                   const rescheduleAction = rescheduleActivityAction.bind(null, activity.id, client.id, fichaPath);
@@ -609,6 +753,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                             placeholder="Que resulto del contacto?"
                             className="w-full rounded-xl border border-outline-variant px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
                           />
+                          <OutcomeTypeSelect name="outcomeType" />
                           <label className="block text-label-sm text-on-surface-variant">
                             Proximo seguimiento (opcional)
                             <input
@@ -685,11 +830,7 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                 required
                 className="w-full rounded-xl border border-outline-variant px-3 py-2.5 text-body-md focus:border-primary focus:outline-none"
               />
-              <input
-                name="objective"
-                placeholder="Objetivo (ej: pasar precio del sillon)"
-                className="w-full rounded-xl border border-outline-variant px-3 py-2.5 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-              />
+              <ObjectivePicker choiceName="objectiveChoice" textName="objective" options={objectiveOptions ?? []} />
               <button
                 type="submit"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-label-md font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-[0.99]"

@@ -7,6 +7,7 @@ import { argDateTimeLocalToIso } from "@/lib/crm/dates";
 import {
   completeActivitySchema,
   logContactSchema,
+  registerPurchaseSchema,
   rescheduleActivitySchema,
   scheduleFollowUpSchema,
 } from "@/lib/crm/validation";
@@ -40,6 +41,32 @@ async function getClientOwner(supabase: Awaited<ReturnType<typeof getCurrentUser
   return client;
 }
 
+/**
+ * El objetivo del proximo contacto se puede elegir de un catalogo administrable
+ * (contact_objectives) o escribir libre ("Otro"). Se sigue guardando como texto
+ * en activities.objective -sin columna/join nuevo- para no tener que tocar cada
+ * lugar de la app que ya muestra ese campo.
+ */
+async function resolveObjectiveText(
+  supabase: Awaited<ReturnType<typeof getCurrentUserContext>>["supabase"],
+  choice: string | undefined,
+  freeText: string | undefined,
+) {
+  const trimmedFreeText = (freeText ?? "").trim();
+
+  if (!choice || choice === "otro") {
+    return trimmedFreeText || null;
+  }
+
+  const { data } = await supabase
+    .from("contact_objectives")
+    .select("name")
+    .eq("id", choice)
+    .maybeSingle<{ name: string }>();
+
+  return data?.name ?? trimmedFreeText ?? null;
+}
+
 export async function logContactAction(clientId: string, formData: FormData) {
   const { supabase, user } = await getCurrentUserContext();
 
@@ -47,7 +74,9 @@ export async function logContactAction(clientId: string, formData: FormData) {
     const payload = logContactSchema.parse({
       type: formData.get("type"),
       outcome: formData.get("outcome"),
+      outcomeType: formData.get("outcomeType") || "",
       nextScheduledAt: formData.get("nextScheduledAt") || "",
+      nextObjectiveChoice: formData.get("nextObjectiveChoice") || "",
       nextObjective: formData.get("nextObjective") || "",
     });
 
@@ -62,6 +91,7 @@ export async function logContactAction(clientId: string, formData: FormData) {
       scheduled_at: nowIso,
       completed_at: nowIso,
       outcome: payload.outcome,
+      outcome_type: payload.outcomeType || null,
       created_by: user.id,
     });
 
@@ -70,13 +100,15 @@ export async function logContactAction(clientId: string, formData: FormData) {
     }
 
     if (payload.nextScheduledAt) {
+      const nextObjective = await resolveObjectiveText(supabase, payload.nextObjectiveChoice, payload.nextObjective);
+
       const { error: nextError } = await supabase.from("activities").insert({
         client_id: clientId,
         assigned_user_id: client.assigned_user_id,
         type: payload.type,
         status: "pendiente",
         scheduled_at: argDateTimeLocalToIso(payload.nextScheduledAt),
-        objective: payload.nextObjective || null,
+        objective: nextObjective,
         created_by: user.id,
       });
 
@@ -99,10 +131,12 @@ export async function scheduleFollowUpAction(clientId: string, formData: FormDat
     const payload = scheduleFollowUpSchema.parse({
       type: formData.get("type"),
       scheduledAt: formData.get("scheduledAt"),
+      objectiveChoice: formData.get("objectiveChoice") || "",
       objective: formData.get("objective") || "",
     });
 
     const client = await getClientOwner(supabase, clientId);
+    const objective = await resolveObjectiveText(supabase, payload.objectiveChoice, payload.objective);
 
     const { error } = await supabase.from("activities").insert({
       client_id: clientId,
@@ -110,7 +144,7 @@ export async function scheduleFollowUpAction(clientId: string, formData: FormDat
       type: payload.type,
       status: "pendiente",
       scheduled_at: argDateTimeLocalToIso(payload.scheduledAt),
-      objective: payload.objective || null,
+      objective,
       created_by: user.id,
     });
 
@@ -140,6 +174,7 @@ export async function completeActivityAction(
   try {
     const payload = completeActivitySchema.parse({
       outcome: formData.get("outcome"),
+      outcomeType: formData.get("outcomeType") || "",
       nextScheduledAt: formData.get("nextScheduledAt") || "",
     });
 
@@ -159,6 +194,7 @@ export async function completeActivityAction(
         status: "realizada",
         completed_at: new Date().toISOString(),
         outcome: payload.outcome,
+        outcome_type: payload.outcomeType || null,
       })
       .eq("id", activityId);
 
@@ -251,13 +287,20 @@ export async function cancelActivityAction(activityId: string, clientId: string,
   redirect(redirectTo);
 }
 
-export async function registerPurchaseAction(clientId: string, redirectTo: string) {
+export async function registerPurchaseAction(clientId: string, redirectTo: string, formData: FormData) {
   const { supabase, user } = await getCurrentUserContext();
 
   try {
+    const payload = registerPurchaseSchema.parse({
+      description: formData.get("description") || "",
+      interestId: formData.get("interestId") || "",
+    });
+
     const { error } = await supabase.from("client_purchases").insert({
       client_id: clientId,
       created_by: user.id,
+      description: payload.description || null,
+      interest_id: payload.interestId || null,
     });
 
     if (error) {

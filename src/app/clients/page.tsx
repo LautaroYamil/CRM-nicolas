@@ -6,6 +6,8 @@ import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { CLIENT_STATUS_OPTIONS, clientStatusChipClasses, clientStatusLabel } from "@/lib/crm/constants";
 import { formatDateTimeAr, formatRelativeAr } from "@/lib/crm/dates";
+import { isOverdue } from "@/lib/crm/overdue";
+import { getClientStatusCounts } from "@/lib/crm/queries";
 
 const PAGE_SIZE = 25;
 
@@ -109,12 +111,12 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
 
   const [
     { data: clients, count: totalFiltered, error },
-    { data: statusRows },
+    statusCountsResult,
     { data: sellerRows },
     { data: interestOptions },
   ] = await Promise.all([
     query.returns<ClientRow[]>(),
-    supabase.from("clients").select("status").is("archived_at", null).limit(2000).returns<{ status: string }[]>(),
+    getClientStatusCounts(supabase),
     supabase.from("profiles").select("id, full_name").eq("active", true).returns<SellerRow[]>(),
     supabase.from("interests").select("id, name").eq("active", true).order("name").returns<InterestOption[]>(),
   ]);
@@ -162,11 +164,8 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     purchaseCountByClient.set(row.client_id, (purchaseCountByClient.get(row.client_id) ?? 0) + 1);
   }
 
-  const statusCounts = new Map<string, number>();
-  for (const row of statusRows ?? []) {
-    statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1);
-  }
-  const totalClients = (statusRows ?? []).length;
+  const statusCounts = statusCountsResult.counts;
+  const totalClients = statusCountsResult.total;
 
   const total = totalFiltered ?? 0;
   const showingFrom = total === 0 ? 0 : from + 1;
@@ -304,7 +303,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
               const interests = interestsByClient.get(client.id) ?? [];
               const purchaseCount = purchaseCountByClient.get(client.id) ?? 0;
               const followUpOverdue =
-                client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
+                client.next_follow_up_at !== null && isOverdue(client.next_follow_up_at, nowIso);
 
               return (
                 <li key={client.id} className="card-premium rounded-xl p-4">

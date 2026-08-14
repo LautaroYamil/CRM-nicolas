@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACTIVITY_TYPE_OPTIONS, CLIENT_STATUS_OPTIONS } from "@/lib/crm/constants";
+import { ACTIVITY_TYPE_OPTIONS, CLIENT_STATUS_OPTIONS, CONTACT_OUTCOME_OPTIONS } from "@/lib/crm/constants";
 
 const statusValues = CLIENT_STATUS_OPTIONS.map((item) => item.value) as [
   (typeof CLIENT_STATUS_OPTIONS)[number]["value"],
@@ -26,6 +26,7 @@ export const clientFormSchema = z.object({
   address: z.string().trim().optional(),
   status: z.enum(statusValues),
   assignedUserId: z.string().uuid("Vendedor invalido"),
+  lossReasonId: z.string().trim().optional(),
   notes: z.string().trim().optional(),
   interestIds: z.array(z.string().uuid()).default([]),
 });
@@ -41,26 +42,46 @@ const dateTimeLocalValue = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Fecha y hora invalidas");
 
+const contactOutcomeValues = CONTACT_OUTCOME_OPTIONS.map((item) => item.value) as [
+  (typeof CONTACT_OUTCOME_OPTIONS)[number]["value"],
+  ...(typeof CONTACT_OUTCOME_OPTIONS)[number]["value"][],
+];
+
+/** Resultado estructurado: opcional, no se obliga a elegir uno todavia. */
+const outcomeTypeValue = z.enum(contactOutcomeValues).optional().or(z.literal(""));
+
+/** "otro" o el id de una fila de contact_objectives; el texto libre acompana como respaldo. */
+const objectiveChoiceValue = z.string().trim().optional();
+
 export const logContactSchema = z.object({
   type: z.enum(activityTypeValues),
   outcome: z.string().trim().min(1, "Contanos el resultado del contacto"),
+  outcomeType: outcomeTypeValue,
   nextScheduledAt: dateTimeLocalValue.optional().or(z.literal("")),
+  nextObjectiveChoice: objectiveChoiceValue,
   nextObjective: z.string().trim().optional(),
 });
 
 export const scheduleFollowUpSchema = z.object({
   type: z.enum(activityTypeValues),
   scheduledAt: dateTimeLocalValue,
+  objectiveChoice: objectiveChoiceValue,
   objective: z.string().trim().optional(),
 });
 
 export const completeActivitySchema = z.object({
   outcome: z.string().trim().min(1, "Contanos el resultado del contacto"),
+  outcomeType: outcomeTypeValue,
   nextScheduledAt: dateTimeLocalValue.optional().or(z.literal("")),
 });
 
 export const rescheduleActivitySchema = z.object({
   scheduledAt: dateTimeLocalValue,
+});
+
+export const registerPurchaseSchema = z.object({
+  description: z.string().trim().optional(),
+  interestId: z.string().trim().optional(),
 });
 
 export const inviteSellerSchema = z.object({

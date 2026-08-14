@@ -7,6 +7,7 @@ import {
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { activityTypeIcon, activityTypeLabel } from "@/lib/crm/constants";
+import { OutcomeTypeSelect } from "@/components/crm/outcome-type-select";
 import {
   argDateStringOf,
   argMonthYearLabel,
@@ -16,6 +17,11 @@ import {
   formatRelativeAr,
   formatTimeAr,
 } from "@/lib/crm/dates";
+import { countOverdueActivities, isOverdue, overdueActivitiesQuery } from "@/lib/crm/overdue";
+import { computePriority, PRIORITY_LABELS } from "@/lib/crm/priority";
+
+const OVERDUE_PAGE_SIZE = 30;
+const WEEK_ROWS_LIMIT = 300;
 
 type AgendaRow = {
   id: string;
@@ -28,11 +34,12 @@ type AgendaRow = {
     first_name: string;
     last_name: string | null;
     phone_normalized: string;
+    status: string;
   } | null;
 };
 
 type AgendaPageProps = {
-  searchParams: Promise<{ week?: string; seller?: string; error?: string }>;
+  searchParams: Promise<{ week?: string; seller?: string; error?: string; overdueLimit?: string }>;
 };
 
 function QuickActivityActions({ row }: { row: AgendaRow }) {
@@ -55,6 +62,7 @@ function QuickActivityActions({ row }: { row: AgendaRow }) {
             placeholder="Que resulto del contacto?"
             className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-body-md focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
           />
+          <OutcomeTypeSelect />
           <label className="block text-label-sm text-on-surface-variant">
             Proximo seguimiento (opcional)
             <input
@@ -107,9 +115,16 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
   const weekEndIso = week[week.length - 1].endIso;
   const { endIso: todayEndIso } = argTodayRange();
   const nowIso = new Date().toISOString();
+  const overdueLimit = Math.max(
+    OVERDUE_PAGE_SIZE,
+    Number.parseInt(params.overdueLimit ?? String(OVERDUE_PAGE_SIZE), 10) || OVERDUE_PAGE_SIZE,
+  );
 
   const baseSelect =
-    "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized)";
+    "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized, status)";
+
+  const sellerScope =
+    profile.role === "admin" && params.seller ? { assignedUserId: params.seller } : undefined;
 
   let weekQuery = supabase
     .from("activities")
@@ -118,32 +133,39 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
     .gte("scheduled_at", weekStartIso)
     .lt("scheduled_at", weekEndIso)
     .order("scheduled_at", { ascending: true })
-    .limit(300);
+    .limit(WEEK_ROWS_LIMIT);
 
-  let overdueQuery = supabase
+  let weekCountQuery = supabase
     .from("activities")
-    .select(baseSelect)
+    .select("id", { count: "exact", head: true })
     .eq("status", "pendiente")
-    .lt("scheduled_at", nowIso)
-    .order("scheduled_at", { ascending: true })
-    .limit(30);
+    .gte("scheduled_at", weekStartIso)
+    .lt("scheduled_at", weekEndIso);
 
-  if (profile.role === "admin" && params.seller) {
-    weekQuery = weekQuery.eq("assigned_user_id", params.seller);
-    overdueQuery = overdueQuery.eq("assigned_user_id", params.seller);
+  const overdueQuery = overdueActivitiesQuery(supabase, nowIso, baseSelect, {
+    limit: overdueLimit,
+    scope: sellerScope,
+  });
+
+  if (sellerScope) {
+    weekQuery = weekQuery.eq("assigned_user_id", sellerScope.assignedUserId);
+    weekCountQuery = weekCountQuery.eq("assigned_user_id", sellerScope.assignedUserId);
   }
 
-  const [{ data: weekRows, error }, { data: overdueRows }, { data: sellerRows }] = await Promise.all([
-    weekQuery.returns<AgendaRow[]>(),
-    overdueQuery.returns<AgendaRow[]>(),
-    profile.role === "admin"
-      ? supabase
-          .from("profiles")
-          .select("id, full_name")
-          .eq("active", true)
-          .returns<{ id: string; full_name: string | null }[]>()
-      : Promise.resolve({ data: [] as { id: string; full_name: string | null }[], error: null }),
-  ]);
+  const [{ data: weekRows, error }, { count: weekTotal }, { data: overdueRows }, overdueTotal, { data: sellerRows }] =
+    await Promise.all([
+      weekQuery.returns<AgendaRow[]>(),
+      weekCountQuery,
+      overdueQuery.returns<AgendaRow[]>(),
+      countOverdueActivities(supabase, nowIso, sellerScope),
+      profile.role === "admin"
+        ? supabase
+            .from("profiles")
+            .select("id, full_name")
+            .eq("active", true)
+            .returns<{ id: string; full_name: string | null }[]>()
+        : Promise.resolve({ data: [] as { id: string; full_name: string | null }[], error: null }),
+    ]);
 
   if (error) {
     return (
@@ -152,6 +174,9 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
       </AppShell>
     );
   }
+
+  const weekTruncated = (weekTotal ?? 0) > WEEK_ROWS_LIMIT;
+  const hasMoreOverdue = overdueTotal > (overdueRows ?? []).length;
 
   const rowsByDay = new Map<string, AgendaRow[]>();
   for (const row of weekRows ?? []) {
@@ -168,6 +193,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
   const overdue = overdueRows ?? [];
 
   const sellerParam = params.seller ? `&seller=${params.seller}` : "";
+  const showMoreOverdueHref = `/agenda?week=${weekOffset}${sellerParam}&overdueLimit=${overdueLimit + OVERDUE_PAGE_SIZE}#vencidos`;
 
   return (
     <AppShell profile={profile} title="Agenda">
@@ -211,14 +237,19 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
               </div>
             </div>
 
-            {overdue.length > 0 ? (
+            {overdueTotal > 0 ? (
               <a
                 href="#vencidos"
                 className="inline-flex w-fit items-center gap-2 rounded-lg border border-error/30 bg-error-container/30 px-3 py-1.5 text-xs font-bold text-on-error-container transition-colors hover:bg-error-container/50"
               >
                 <span className="material-symbols-outlined text-base text-error">warning</span>
-                {overdue.length} {overdue.length === 1 ? "vencido" : "vencidos"}
+                {overdueTotal} {overdueTotal === 1 ? "vencido" : "vencidos"}
               </a>
+            ) : null}
+            {weekTruncated ? (
+              <p className="text-xs font-medium text-on-surface-variant">
+                Mostrando los primeros {WEEK_ROWS_LIMIT} de {weekTotal} seguimientos de esta semana.
+              </p>
             ) : null}
 
             {profile.role === "admin" ? (
@@ -284,7 +315,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                   {dayRows.length > 0 ? (
                     <ul className="space-y-2">
                       {dayRows.map((row) => {
-                        const missed = row.scheduled_at < nowIso;
+                        const missed = isOverdue(row.scheduled_at, nowIso);
 
                         return (
                           <li key={row.id}>
@@ -354,7 +385,7 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
 
                     <div className="flex flex-1 flex-col gap-2">
                       {dayRows.map((row) => {
-                        const missed = row.scheduled_at < nowIso;
+                        const missed = isOverdue(row.scheduled_at, nowIso);
 
                         return (
                           <Link
@@ -457,10 +488,17 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
           </section>
 
           <section id="vencidos" className="scroll-mt-24 card-premium rounded-xl p-5">
-            <h2 className="mb-4 flex items-center gap-2 text-headline-sm font-bold">
-              <span className="material-symbols-outlined text-error">warning</span>
-              Vencidos
-            </h2>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 text-headline-sm font-bold">
+                <span className="material-symbols-outlined text-error">warning</span>
+                Vencidos
+              </h2>
+              {overdueTotal > 0 ? (
+                <span className="rounded border border-error/20 bg-error-container/20 px-2 py-1 text-[10px] font-bold tracking-wider text-error uppercase">
+                  {overdueTotal} {overdueTotal === 1 ? "total" : "totales"}
+                </span>
+              ) : null}
+            </div>
             {overdue.length === 0 ? (
               <p className="text-body-md text-on-surface-variant">
                 Sin seguimientos vencidos. Buen trabajo.
@@ -470,13 +508,21 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                 {overdue.map((row) => {
                   const client = row.clients;
                   const whatsappDigits = client?.phone_normalized.replace(/\D+/g, "") ?? "";
+                  const priority = computePriority(true, client?.status ?? "");
 
                   return (
                     <li key={row.id} className="rounded-2xl border border-error/30 bg-error-container/20 p-4">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="rounded-full bg-error-container px-2 py-0.5 text-[10px] font-bold tracking-wide text-on-error-container uppercase">
-                          {activityTypeLabel(row.type)} vencida
-                        </span>
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-full bg-error-container px-2 py-0.5 text-[10px] font-bold tracking-wide text-on-error-container uppercase">
+                            {activityTypeLabel(row.type)} vencida
+                          </span>
+                          {priority === "alta" ? (
+                            <span className="rounded-full bg-error px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">
+                              Prioridad {PRIORITY_LABELS[priority]}
+                            </span>
+                          ) : null}
+                        </div>
                         <span className="text-label-sm font-bold text-error">
                           {formatRelativeAr(row.scheduled_at)}
                         </span>
@@ -508,6 +554,14 @@ export default async function AgendaPage({ searchParams }: AgendaPageProps) {
                 })}
               </ul>
             )}
+            {hasMoreOverdue ? (
+              <a
+                href={showMoreOverdueHref}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/40 py-2.5 text-label-md font-bold text-primary transition-colors hover:bg-surface-container"
+              >
+                Mostrar mas ({overdueTotal - overdue.length} restantes)
+              </a>
+            ) : null}
           </section>
         </aside>
       </div>

@@ -11,6 +11,8 @@ import {
   formatTimeAr,
   isoDaysAgo,
 } from "@/lib/crm/dates";
+import { countOverdueActivities, isOverdue } from "@/lib/crm/overdue";
+import { getClientStatusCounts } from "@/lib/crm/queries";
 
 const DAYS_WITHOUT_CONTACT = 14;
 
@@ -43,7 +45,7 @@ export default async function DashboardPage() {
   const newClientsThresholdIso = isoDaysAgo(7);
   const nowIso = new Date().toISOString();
 
-  const [todayRes, overdueRes, newClientsRes, staleRes, boughtRes, statusRes, pendingRes, sellersRes] =
+  const [todayRes, newClientsRes, staleRes, boughtRes, pendingRes, sellersRes, overdueCount, statusCountsResult] =
     await Promise.all([
       supabase
         .from("activities")
@@ -51,11 +53,6 @@ export default async function DashboardPage() {
         .eq("status", "pendiente")
         .gte("scheduled_at", nowIso)
         .lt("scheduled_at", endIso),
-      supabase
-        .from("activities")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pendiente")
-        .lt("scheduled_at", nowIso),
       supabase
         .from("clients")
         .select("id", { count: "exact", head: true })
@@ -74,12 +71,6 @@ export default async function DashboardPage() {
         .eq("status", "compro")
         .is("next_follow_up_at", null),
       supabase
-        .from("clients")
-        .select("status")
-        .is("archived_at", null)
-        .limit(2000)
-        .returns<{ status: string }[]>(),
-      supabase
         .from("activities")
         .select(
           "id, type, scheduled_at, objective, assigned_user_id, clients(id, first_name, last_name, phone_normalized, status)",
@@ -90,20 +81,17 @@ export default async function DashboardPage() {
         .limit(20)
         .returns<PendingRow[]>(),
       supabase.from("profiles").select("id, full_name").returns<{ id: string; full_name: string | null }[]>(),
+      countOverdueActivities(supabase, nowIso),
+      getClientStatusCounts(supabase),
     ]);
 
   const sellersById = new Map((sellersRes.data ?? []).map((seller) => [seller.id, seller.full_name ?? "Vendedor"]));
 
-  const statusCounts = new Map<string, number>();
-  for (const row of statusRes.data ?? []) {
-    statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1);
-  }
+  const statusCounts = statusCountsResult.counts;
   const funnelTotal = FUNNEL_SEGMENTS.reduce(
     (sum, segment) => sum + (statusCounts.get(segment.status) ?? 0),
     0,
   );
-
-  const overdueCount = overdueRes.count ?? 0;
 
   const kpis = [
     {
@@ -154,18 +142,40 @@ export default async function DashboardPage() {
           <h1 className="text-headline-md font-bold tracking-tight text-on-surface lg:text-headline-xl">
             {argGreeting()}, {firstName}
           </h1>
-          <div className="flex items-center gap-2 font-medium text-on-surface-variant">
-            {overdueCount > 0 ? (
-              <>
-                <span className="h-2 w-2 animate-pulse rounded-full bg-error" />
-                <p>Tenes seguimientos vencidos. Revisalos antes de que se enfrien.</p>
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-green-600" />
-                <p>Todo al dia. Esto es lo que viene.</p>
-              </>
-            )}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 font-medium text-on-surface-variant">
+              {overdueCount > 0 ? (
+                <>
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-error" />
+                  <p>
+                    Tenes {overdueCount} {overdueCount === 1 ? "seguimiento vencido" : "seguimientos vencidos"}
+                    {todayRes.count ? ` y ${todayRes.count} para hoy` : ""}. Empeza por los mas viejos, se
+                    enfrian primero.
+                  </p>
+                </>
+              ) : todayRes.count ? (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                  <p>
+                    Tenes {todayRes.count} {todayRes.count === 1 ? "seguimiento" : "seguimientos"} para hoy.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-green-600" />
+                  <p>Todo al dia. Esto es lo que viene.</p>
+                </>
+              )}
+            </div>
+            {overdueCount > 0 || (todayRes.count ?? 0) > 0 ? (
+              <Link
+                href="/jornada"
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold tracking-widest text-on-primary uppercase shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-[18px]">bolt</span>
+                Empezar jornada
+              </Link>
+            ) : null}
           </div>
         </section>
 
@@ -300,7 +310,7 @@ export default async function DashboardPage() {
               {pendingRows.map((row) => {
                 const client = row.clients;
                 const clientName = client ? `${client.first_name} ${client.last_name ?? ""}`.trim() : "Cliente";
-                const overdue = row.scheduled_at < nowIso;
+                const overdue = isOverdue(row.scheduled_at, nowIso);
                 const isToday = row.scheduled_at >= startIso;
 
                 return (
@@ -391,7 +401,7 @@ export default async function DashboardPage() {
                       .slice(0, 2)
                       .join("")
                       .toUpperCase();
-                    const overdue = row.scheduled_at < nowIso;
+                    const overdue = isOverdue(row.scheduled_at, nowIso);
                     const isToday = row.scheduled_at >= startIso;
                     const isWhatsapp = row.type === "whatsapp";
 

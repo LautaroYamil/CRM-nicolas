@@ -12,6 +12,12 @@ type InterestOption = {
   active: boolean;
 };
 
+type LossReasonOption = {
+  id: string;
+  name: string;
+  active: boolean;
+};
+
 type ClientFormValues = {
   firstName: string;
   lastName: string;
@@ -22,6 +28,7 @@ type ClientFormValues = {
   address: string;
   status: ClientStatus;
   assignedUserId: string;
+  lossReasonId: string;
   notes: string;
   interestIds: string[];
 };
@@ -34,6 +41,7 @@ type ClientFormProps = {
   action: (formData: FormData) => void;
   sellers: SellerOption[];
   interests: InterestOption[];
+  lossReasons: LossReasonOption[];
   values: ClientFormValues;
   isAdmin: boolean;
   errorMessage?: string;
@@ -54,12 +62,14 @@ export function ClientForm({
   action,
   sellers,
   interests,
+  lossReasons,
   values,
   isAdmin,
   errorMessage,
   withFirstFollowUp = false,
 }: ClientFormProps) {
   const activeInterests = interests.filter((interest) => interest.active);
+  const activeLossReasons = lossReasons.filter((reason) => reason.active);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -170,6 +180,17 @@ export function ClientForm({
               </select>
             </label>
             {!isAdmin ? <input type="hidden" name="assignedUserId" value={values.assignedUserId} /> : null}
+            <label className="block sm:col-span-2">
+              <span className={labelClasses}>Motivo (solo si el estado es No interesado)</span>
+              <select name="lossReasonId" defaultValue={values.lossReasonId} className={inputClasses}>
+                <option value="">Seleccionar motivo...</option>
+                {activeLossReasons.map((reason) => (
+                  <option key={reason.id} value={reason.id}>
+                    {reason.name}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div className="mt-5">
