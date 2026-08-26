@@ -123,6 +123,8 @@ type TimelineEvent = {
   iconClasses: string;
   title: string;
   detail: string | null;
+  /** Solo presente en eventos de compra: permite borrarla desde el propio historial. */
+  purchaseId?: string;
 };
 
 export default async function ClientDetailPage({ params, searchParams }: ClientDetailPageProps) {
@@ -227,6 +229,15 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
         ? `Estado: ${clientStatusLabel(change.old_status)} a ${clientStatusLabel(change.new_status)}`
         : `Cliente creado como ${clientStatusLabel(change.new_status)}`,
       detail: change.changed_by ? `Por ${sellersById.get(change.changed_by) ?? "un usuario"}` : null,
+    })),
+    ...(purchases ?? []).map((purchase) => ({
+      key: `purchase-${purchase.id}`,
+      at: purchase.purchased_at,
+      icon: "shopping_bag",
+      iconClasses: "bg-green-100 text-green-700",
+      title: "Compra registrada",
+      detail: [purchase.description, purchase.interests?.name].filter(Boolean).join(" - ") || null,
+      purchaseId: purchase.id,
     })),
   ].sort((a, b) => (a.at < b.at ? 1 : -1));
 
@@ -507,36 +518,9 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
             {(purchases ?? []).length === 0 ? (
               <p className="text-body-md text-on-surface-variant">Todavia no compro nada.</p>
             ) : (
-              <ul className="space-y-2">
-                {(purchases ?? []).map((purchase) => {
-                  const purchaseDetail = [purchase.description, purchase.interests?.name]
-                    .filter(Boolean)
-                    .join(" - ");
-
-                  return (
-                    <li
-                      key={purchase.id}
-                      className="flex items-start justify-between gap-2 rounded-lg bg-surface-container-low/60 px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <span className="text-body-md font-medium">{formatDateAr(purchase.purchased_at)}</span>
-                        {purchaseDetail ? (
-                          <p className="truncate text-label-sm text-on-surface-variant">{purchaseDetail}</p>
-                        ) : null}
-                      </div>
-                      <form action={deletePurchaseAction.bind(null, purchase.id, client.id, `/clients/${client.id}`)}>
-                        <ConfirmSubmitButton
-                          confirmMessage="Quitar esta compra del historial?"
-                          title="Quitar"
-                          className="shrink-0 p-1 text-on-surface-variant transition-colors hover:text-error"
-                        >
-                          <span className="material-symbols-outlined text-base">close</span>
-                        </ConfirmSubmitButton>
-                      </form>
-                    </li>
-                  );
-                })}
-              </ul>
+              <p className="text-label-sm text-on-surface-variant">
+                Vas a ver el detalle de cada compra en el Historial de actividad, mas abajo.
+              </p>
             )}
           </section>
 
@@ -672,7 +656,22 @@ export default async function ClientDetailPage({ params, searchParams }: ClientD
                     <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low/60 px-4 py-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-bold">{event.title}</p>
-                        <p className="text-label-sm text-on-surface-variant">{formatDateTimeAr(event.at)}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-label-sm text-on-surface-variant">{formatDateTimeAr(event.at)}</p>
+                          {event.purchaseId ? (
+                            <form
+                              action={deletePurchaseAction.bind(null, event.purchaseId, client.id, `/clients/${client.id}`)}
+                            >
+                              <ConfirmSubmitButton
+                                confirmMessage="Quitar esta compra del historial?"
+                                title="Quitar compra"
+                                className="p-1 text-on-surface-variant transition-colors hover:text-error"
+                              >
+                                <span className="material-symbols-outlined text-base">close</span>
+                              </ConfirmSubmitButton>
+                            </form>
+                          ) : null}
+                        </div>
                       </div>
                       {event.detail ? (
                         <p className="mt-1 text-body-md whitespace-pre-wrap text-on-surface-variant">
