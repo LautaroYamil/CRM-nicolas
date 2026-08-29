@@ -12,13 +12,22 @@ type AppShellProps = {
 };
 
 export function AppShell({ profile, title, children }: AppShellProps) {
-  const navItems: NavItem[] = [
+  // Uso diario, siempre visible (sidebar completo en desktop, y la barra de
+  // abajo en mobile/tablet -por eso se mantiene corta: 5 iconos es lo maximo
+  // que entra comodo en una barra inferior sin que se apreten).
+  const coreItems: NavItem[] = [
     { label: "Inicio", href: "/dashboard", icon: "dashboard" },
     { label: "Clientes", href: "/clients", icon: "groups" },
     { label: "Agenda", href: "/agenda", icon: "calendar_today" },
     { label: "Reportes", href: "/reports", icon: "analytics" },
     { label: "Check-in evento", href: "/checkin", icon: "how_to_reg" },
-    ...(profile.role === "admin"
+  ];
+
+  // Pantallas de administracion: en el sidebar de desktop van sueltas como
+  // siempre; en la barra inferior de mobile/tablet se agrupan en "Mas" para
+  // no desbordar la barra.
+  const adminItems: NavItem[] =
+    profile.role === "admin"
       ? [
           { label: "Intereses", href: "/admin/interests", icon: "favorite" },
           { label: "Objetivos", href: "/admin/contact-objectives", icon: "flag" },
@@ -26,8 +35,9 @@ export function AppShell({ profile, title, children }: AppShellProps) {
           { label: "Equipo", href: "/admin/users", icon: "manage_accounts" },
           { label: "Auditoria", href: "/admin/audit-log", icon: "history" },
         ]
-      : []),
-  ];
+      : [];
+
+  const navItems: NavItem[] = [...coreItems, ...adminItems];
 
   const initials = (profile.full_name ?? "?")
     .split(/\s+/)
@@ -137,7 +147,7 @@ export function AppShell({ profile, title, children }: AppShellProps) {
 
       {/* Barra inferior (celular) */}
       <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-outline-variant/30 bg-surface-container-lowest/95 backdrop-blur-md lg:hidden">
-        <BottomNavLinks items={navItems} />
+        <BottomNavLinks items={coreItems} overflowItems={adminItems} />
       </div>
     </div>
   );
