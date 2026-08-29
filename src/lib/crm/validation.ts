@@ -84,6 +84,17 @@ export const registerPurchaseSchema = z.object({
   interestId: z.string().trim().optional(),
 });
 
+export const checkinSearchSchema = z.object({
+  event: z.string().trim().min(1, "Falta el nombre del evento"),
+  query: z.string().trim().min(1, "Escribi un telefono o nombre para buscar"),
+});
+
+export const checkinNewClientSchema = z.object({
+  event: z.string().trim().min(1, "Falta el nombre del evento"),
+  firstName: z.string().trim().min(1, "El nombre es obligatorio"),
+  phone: z.string().trim().min(1, "El telefono es obligatorio"),
+});
+
 export const inviteSellerSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email invalido"),
   fullName: z.string().trim().min(1, "El nombre es obligatorio"),
