@@ -22,13 +22,13 @@ Todo lo que cargás acá queda guardado en la ficha normal del cliente — no es
 
 ## 2. Sorteo
 
-Desde **Evento** tocás **"Ir al sorteo"**. Ahí aparece la ruleta con los nombres de los anotados y el botón **"Sortear ganador"**.
+Desde **Evento** tocás **"Ir al sorteo"**. Ahí aparece la ruleta con los nombres de los anotados y el botón **"Sortear ganador"**. Son **5 puestos**: después del 5to ganador el botón desaparece solo y la pantalla dice "Sorteo terminado" — no hace falta llevar la cuenta a mano.
 
 - Cada vez que tocás sortear, la ruleta gira unos segundos y se detiene en un nombre real (el sorteo ya lo decidió el sistema antes de que empiece a girar — la animación es solo la parte visual, no hay forma de que el resultado cambie a mitad de camino).
 - Después de un ganador, el botón pasa a decir **"Sortear otro"** para el siguiente puesto, sin repetir a nadie que ya salió.
 - Como esta pantalla se va a grabar para mostrarla, no aparece en ningún lado el criterio de selección — es información interna, no hace falta explicarla en el momento.
 
-**Algo para que sepas vos, no hace falta decirlo en el evento:** el 1er puesto tiene una regla especial — sale entre los anotados que **ya tienen alguna compra registrada en el sistema**, y si compró varias veces tiene más chances (no es determinístico, sigue siendo al azar, solo que pesado a favor de los clientes frecuentes). Del 2do puesto para adelante es parejo entre todos los anotados. Si probás con clientes de prueba sin compras cargadas, el 1er puesto va a decir **"Nadie de los anotados cumple los requisitos para este puesto todavía"** — no es un error ni que el sistema no los detectó, es la regla funcionando: ese puesto específicamente pide compra previa. Para probarlo de punta a punta, usá algún cliente que ya tenga una compra registrada en su ficha.
+**Algo para que sepas vos, no hace falta decirlo en el evento:** no hay una lista aparte de "compradores" — se carga a todo el mundo igual, mezclados. Pero a la hora de sortear (**los 5 puestos, no solo el primero**), cada anotado entra con 1 ficha de base más 1 ficha extra por cada compra que ya tenga registrada en el sistema. Es decir: cualquiera puede ganar cualquier puesto, pero quien ya compró (y cuantas más veces compró) tiene más chances en cada uno de los 5 sorteos. Nunca se traba ni bloquea nada, aunque todavía no haya ningún comprador anotado — en ese caso el sorteo queda parejo entre todos, como si fuera cualquier rifa normal.
 
 ## Dónde está cada cosa
 

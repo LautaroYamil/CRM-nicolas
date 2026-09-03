@@ -168,21 +168,20 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
 /**
  * Sortea un ganador entre los clientes etiquetados con este evento, excluyendo
  * a los que ya salieron sorteados antes en la misma tanda (para "sortear otro"
- * sin repetir a la misma persona). La cola de excluidos viaja en la URL, no en
- * una tabla nueva -mismo mecanismo que el modo Jornada.
+ * sin repetir a la misma persona, en cualquiera de los 5 puestos). La cola de
+ * excluidos viaja en la URL, no en una tabla nueva -mismo mecanismo que el
+ * modo Jornada.
  *
- * Regla de negocio del 1er puesto (primer sorteo de la tanda, cuando todavia
- * no se excluyo a nadie): el ganador tiene que ser un cliente con al menos una
- * compra registrada (client_purchases), y el sorteo se pondera por cantidad de
- * compras -quien compro mas veces tiene mas "fichas" en el sorteo, sin dejar
- * de ser al azar. Si no hay ningun anotado con compras previas, no se puede
- * sortear el 1er puesto todavia. Del 2do puesto en adelante, el sorteo es
- * parejo entre todos los anotados restantes (regla original, sin cambios).
+ * Regla de negocio (igual para los 5 puestos, no solo el primero): todos los
+ * anotados entran al sorteo -no hay una lista aparte de "compradores"-, pero
+ * cada uno pesa distinto: 1 ficha base + 1 ficha extra por cada compra
+ * registrada (client_purchases). Asi cualquiera puede salir sorteado, pero
+ * quien ya compro (y mas veces compro) tiene mas chances, sin que el sorteo
+ * deje de ser al azar ni se trabe si todavia no hay ningun comprador anotado.
  */
 export async function pickWinnerAction(eventTag: string, excludedCsv: string, redirectTo: string) {
   const { supabase } = await getCurrentUserContext();
   const excludedIds = excludedCsv.split(",").filter(Boolean);
-  const isFirstPlaceDraw = excludedIds.length === 0;
   let newExcluded: string | null = null;
 
   try {
@@ -206,46 +205,33 @@ export async function pickWinnerAction(eventTag: string, excludedCsv: string, re
       throw new Error("No quedan mas participantes para sortear.");
     }
 
-    let winnerId: string;
+    const { data: purchaseRows, error: purchaseError } = await supabase
+      .from("client_purchases")
+      .select("client_id")
+      .in(
+        "client_id",
+        eligible.map((client) => client.id),
+      )
+      .returns<{ client_id: string }[]>();
 
-    if (isFirstPlaceDraw) {
-      const { data: purchaseRows, error: purchaseError } = await supabase
-        .from("client_purchases")
-        .select("client_id")
-        .in(
-          "client_id",
-          eligible.map((client) => client.id),
-        )
-        .returns<{ client_id: string }[]>();
-
-      if (purchaseError) {
-        throw new Error(purchaseError.message);
-      }
-
-      const purchaseCounts = new Map<string, number>();
-      for (const row of purchaseRows ?? []) {
-        purchaseCounts.set(row.client_id, (purchaseCounts.get(row.client_id) ?? 0) + 1);
-      }
-
-      const weightedTickets: string[] = [];
-      for (const client of eligible) {
-        const purchases = purchaseCounts.get(client.id) ?? 0;
-        for (let i = 0; i < purchases; i++) {
-          weightedTickets.push(client.id);
-        }
-      }
-
-      if (weightedTickets.length === 0) {
-        // Mensaje neutro a proposito (esta pantalla se graba para el stand):
-        // no revela la regla interna de seleccion del 1er puesto.
-        throw new Error("Nadie de los anotados cumple los requisitos para este puesto todavia.");
-      }
-
-      winnerId = weightedTickets[Math.floor(Math.random() * weightedTickets.length)];
-    } else {
-      winnerId = eligible[Math.floor(Math.random() * eligible.length)].id;
+    if (purchaseError) {
+      throw new Error(purchaseError.message);
     }
 
+    const purchaseCounts = new Map<string, number>();
+    for (const row of purchaseRows ?? []) {
+      purchaseCounts.set(row.client_id, (purchaseCounts.get(row.client_id) ?? 0) + 1);
+    }
+
+    const weightedTickets: string[] = [];
+    for (const client of eligible) {
+      const tickets = 1 + (purchaseCounts.get(client.id) ?? 0);
+      for (let i = 0; i < tickets; i++) {
+        weightedTickets.push(client.id);
+      }
+    }
+
+    const winnerId = weightedTickets[Math.floor(Math.random() * weightedTickets.length)];
     newExcluded = [...excludedIds, winnerId].join(",");
   } catch (error) {
     redirect(withError(redirectTo, toErrorMessage(error)));

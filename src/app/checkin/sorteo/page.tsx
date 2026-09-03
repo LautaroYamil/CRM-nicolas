@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 
 const MAX_WHEEL_SEGMENTS = 10;
+const MAX_PLACES = 5;
 
 type SorteoPageProps = {
   searchParams: Promise<{ event?: string; excluded?: string; error?: string }>;
@@ -58,7 +59,8 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const winnerId = excludedIds[excludedIds.length - 1] ?? null;
   // Exclusiones vigentes ANTES de este sorteo (para reconstruir que pool estuvo en juego).
   const priorExcludedIds = winnerId ? excludedIds.slice(0, -1) : excludedIds;
-  const roundIsFirstPlace = priorExcludedIds.length === 0;
+  // excludedIds.length es la cantidad de puestos ya sorteados (cada exclusion es un ganador).
+  const placesAwarded = excludedIds.length;
   const redirectBase = `/checkin/sorteo?event=${encodeURIComponent(eventTag)}`;
 
   let totalQuery = supabase
@@ -77,9 +79,10 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
     remainingQuery = remainingQuery.not("id", "in", `(${excludedIds.join(",")})`);
   }
 
-  // Pool que estuvo "en juego" en esta ronda (para mostrar en la ruleta): los
-  // que quedaban antes de este sorteo, filtrados por la misma regla de negocio
-  // que uso pickWinnerAction (1er puesto: solo compradores previos).
+  // Pool que estuvo "en juego" en esta ronda (para mostrar en la ruleta): todos
+  // los que quedaban antes de este sorteo -no se filtra por compras, esa
+  // ponderacion la aplica pickWinnerAction al elegir, no cambia quien aparece
+  // como candidato visible.
   let poolQuery = supabase
     .from("clients")
     .select("id, first_name, last_name")
@@ -104,20 +107,6 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
 
   let pool = rawPool ?? [];
 
-  if (roundIsFirstPlace && pool.length > 0) {
-    const { data: purchaseRows } = await supabase
-      .from("client_purchases")
-      .select("client_id")
-      .in(
-        "client_id",
-        pool.map((client) => client.id),
-      )
-      .returns<{ client_id: string }[]>();
-
-    const buyerIds = new Set((purchaseRows ?? []).map((row) => row.client_id));
-    pool = pool.filter((client) => buyerIds.has(client.id));
-  }
-
   // El ganador siempre se muestra, aunque por algun motivo no haya aparecido
   // en el pool reconstruido (ej. quedo archivado despues de ganar): el nombre
   // del cartel de "Ganador" nunca depende de esa reconstruccion.
@@ -141,19 +130,15 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const names = wheelPool.map(fullName);
   const highlightIndex = winnerRow ? wheelPool.findIndex((client) => client.id === winnerRow.id) : null;
   const winnerName = winnerRow ? fullName(winnerRow) : null;
-  const nextPlaceNumber = excludedIds.length + 1;
+  const nextPlaceNumber = placesAwarded + 1;
+  const allPlacesAwarded = placesAwarded >= MAX_PLACES;
 
   const pickAction = pickWinnerAction.bind(null, eventTag, excludedCsv, redirectBase);
 
-  // Mensajes neutros a proposito: esta pantalla se graba para el publico del
-  // stand, asi que no explican la regla interna de seleccion (compras previas
-  // ponderadas) del 1er puesto -la logica sigue funcionando igual por atras.
-  // Si distinguen "no cumple requisitos" (1er puesto) de "no queda nadie"
-  // (rondas siguientes) para que quien opera la tablet no lo confunda con un
-  // error real cuando en realidad la regla esta funcionando como se espera.
-  const emptyLabel = roundIsFirstPlace
-    ? "Nadie de los anotados cumple los requisitos para este puesto todavia."
-    : "No quedan mas participantes para sortear.";
+  // Mensaje neutro a proposito: esta pantalla se graba para el publico del
+  // stand, asi que no explica que el sorteo pondera por compras previas -la
+  // logica sigue funcionando igual por atras, solo que no se explica en pantalla.
+  const emptyLabel = "No quedan mas participantes para sortear.";
 
   return (
     <AppShell profile={profile} title="Sorteo">
@@ -174,7 +159,9 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
 
         <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-lowest px-4 py-1.5 text-label-md font-bold text-on-surface-variant uppercase tracking-wider">
           <span className="material-symbols-outlined text-[18px] text-primary">military_tech</span>
-          {nextPlaceNumber === 1 ? "1er puesto" : `${nextPlaceNumber}° puesto`}
+          {allPlacesAwarded
+            ? `Sorteo terminado (${MAX_PLACES} de ${MAX_PLACES})`
+            : `${nextPlaceNumber === 1 ? "1er" : `${nextPlaceNumber}°`} puesto de ${MAX_PLACES}`}
         </p>
 
         {params.error ? (
@@ -193,7 +180,7 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
           />
         </div>
 
-        {(remainingCount ?? 0) > 0 ? (
+        {!allPlacesAwarded && (remainingCount ?? 0) > 0 ? (
           <form action={pickAction}>
             <button
               type="submit"
@@ -205,9 +192,11 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
           </form>
         ) : (
           <p className="text-body-md text-on-surface-variant">
-            {(totalCount ?? 0) === 0
-              ? "Todavía no hay participantes anotados para este evento."
-              : "Ya se sorteó a todos los participantes."}
+            {allPlacesAwarded
+              ? `Ya se sortearon los ${MAX_PLACES} puestos.`
+              : (totalCount ?? 0) === 0
+                ? "Todavía no hay participantes anotados para este evento."
+                : "Ya se sorteó a todos los participantes."}
           </p>
         )}
       </div>
