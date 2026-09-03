@@ -146,10 +146,14 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const pickAction = pickWinnerAction.bind(null, eventTag, excludedCsv, redirectBase);
 
   // Mensajes neutros a proposito: esta pantalla se graba para el publico del
-  // stand, asi que no tiene que filtrar la regla interna de seleccion
-  // (compras previas ponderadas) del 1er puesto -la logica sigue funcionando
-  // igual por atras, solo que no se explica en pantalla.
-  const emptyLabel = "Todavia no hay participantes para este sorteo.";
+  // stand, asi que no explican la regla interna de seleccion (compras previas
+  // ponderadas) del 1er puesto -la logica sigue funcionando igual por atras.
+  // Si distinguen "no cumple requisitos" (1er puesto) de "no queda nadie"
+  // (rondas siguientes) para que quien opera la tablet no lo confunda con un
+  // error real cuando en realidad la regla esta funcionando como se espera.
+  const emptyLabel = roundIsFirstPlace
+    ? "Nadie de los anotados cumple los requisitos para este puesto todavia."
+    : "No quedan mas participantes para sortear.";
 
   return (
     <AppShell profile={profile} title="Sorteo">

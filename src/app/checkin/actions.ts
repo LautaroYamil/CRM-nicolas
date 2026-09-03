@@ -238,7 +238,7 @@ export async function pickWinnerAction(eventTag: string, excludedCsv: string, re
       if (weightedTickets.length === 0) {
         // Mensaje neutro a proposito (esta pantalla se graba para el stand):
         // no revela la regla interna de seleccion del 1er puesto.
-        throw new Error("Todavia no hay participantes para este sorteo.");
+        throw new Error("Nadie de los anotados cumple los requisitos para este puesto todavia.");
       }
 
       winnerId = weightedTickets[Math.floor(Math.random() * weightedTickets.length)];

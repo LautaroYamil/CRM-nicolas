@@ -28,7 +28,7 @@ Desde **Evento** tocás **"Ir al sorteo"**. Ahí aparece la ruleta con los nombr
 - Después de un ganador, el botón pasa a decir **"Sortear otro"** para el siguiente puesto, sin repetir a nadie que ya salió.
 - Como esta pantalla se va a grabar para mostrarla, no aparece en ningún lado el criterio de selección — es información interna, no hace falta explicarla en el momento.
 
-**Algo para que sepas vos, no hace falta decirlo en el evento:** el 1er puesto tiene una regla especial — sale entre los anotados que **ya tienen alguna compra registrada en el sistema**, y si compró varias veces tiene más chances (no es determinístico, sigue siendo al azar, solo que pesado a favor de los clientes frecuentes). Del 2do puesto para adelante es parejo entre todos los anotados. Si todavía no hay ningún anotado con compras previas, el botón del 1er puesto no te va a dejar sortear todavía — no es un error, es la regla funcionando.
+**Algo para que sepas vos, no hace falta decirlo en el evento:** el 1er puesto tiene una regla especial — sale entre los anotados que **ya tienen alguna compra registrada en el sistema**, y si compró varias veces tiene más chances (no es determinístico, sigue siendo al azar, solo que pesado a favor de los clientes frecuentes). Del 2do puesto para adelante es parejo entre todos los anotados. Si probás con clientes de prueba sin compras cargadas, el 1er puesto va a decir **"Nadie de los anotados cumple los requisitos para este puesto todavía"** — no es un error ni que el sistema no los detectó, es la regla funcionando: ese puesto específicamente pide compra previa. Para probarlo de punta a punta, usá algún cliente que ya tenga una compra registrada en su ficha.
 
 ## Dónde está cada cosa
 
