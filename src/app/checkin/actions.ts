@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { normalizePhoneForStorage } from "@/lib/crm/phone";
-import { checkinNewClientSchema } from "@/lib/crm/validation";
+import { checkinEventDataSchema, checkinNewClientSchema } from "@/lib/crm/validation";
+
+type SupabaseClientLike = Awaited<ReturnType<typeof getCurrentUserContext>>["supabase"];
 
 function toErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
@@ -19,30 +21,83 @@ function withError(url: string, message: string) {
   return `${url}${separator}error=${encodeURIComponent(message)}`;
 }
 
+function readEventDataFromFormData(formData: FormData) {
+  return checkinEventDataSchema.parse({
+    locality: formData.get("locality") || "",
+    interestLevel: formData.get("interestLevel"),
+    interestIds: Array.from(new Set(formData.getAll("interestIds").map(String).filter(Boolean))),
+  });
+}
+
+/**
+ * Guarda localidad, nivel de interes en el stand e intereses nuevos sobre un
+ * cliente ya insertado/encontrado. Los intereses se agregan sin pisar los que
+ * el cliente ya tenia cargados de antes (el check-in es aditivo, no una edicion
+ * completa de ficha) -de ahi el upsert con ignoreDuplicates en vez del
+ * borrar-y-reinsertar que usa la edicion de ficha completa.
+ */
+async function attachEventData(
+  supabase: SupabaseClientLike,
+  clientId: string,
+  eventTag: string,
+  eventData: { locality?: string; interestLevel: string; interestIds: string[] },
+) {
+  const { error: updateError } = await supabase
+    .from("clients")
+    .update({
+      event_tag: eventTag,
+      event_interest_level: eventData.interestLevel,
+      ...(eventData.locality ? { locality: eventData.locality } : {}),
+    })
+    .eq("id", clientId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  if (eventData.interestIds.length > 0) {
+    const rows = eventData.interestIds.map((interestId) => ({
+      client_id: clientId,
+      interest_id: interestId,
+    }));
+
+    const { error: interestsError } = await supabase
+      .from("client_interests")
+      .upsert(rows, { onConflict: "client_id,interest_id", ignoreDuplicates: true });
+
+    if (interestsError) {
+      throw new Error(interestsError.message);
+    }
+  }
+}
+
 /** Marca a un cliente que YA existe en el sistema como que vino a este evento. No duplica nada. */
-export async function checkinExistingAction(clientId: string, eventTag: string, redirectTo: string) {
+export async function checkinExistingAction(
+  clientId: string,
+  eventTag: string,
+  redirectTo: string,
+  formData: FormData,
+) {
   const { supabase } = await getCurrentUserContext();
 
   try {
-    const { error } = await supabase.from("clients").update({ event_tag: eventTag }).eq("id", clientId);
-
-    if (error) {
-      throw new Error(error.message);
-    }
+    const eventData = readEventDataFromFormData(formData);
+    await attachEventData(supabase, clientId, eventTag, eventData);
   } catch (error) {
     redirect(withError(redirectTo, toErrorMessage(error)));
   }
 
   revalidatePath("/checkin");
+  revalidatePath(`/clients/${clientId}`);
   redirect(redirectTo);
 }
 
 /**
- * Carga un cliente nuevo directo desde el check-in del evento (solo nombre y
- * telefono, sin el resto del formulario completo). Antes de insertar, hace un
+ * Carga un cliente nuevo directo desde el check-in del evento (nombre, telefono,
+ * localidad, intereses y nivel de interes en el stand). Antes de insertar, hace un
  * ultimo chequeo por telefono exacto -si alguien ya lo cargo mientras tanto o
  * la busqueda no lo encontro por algun motivo, en vez de duplicarlo lo
- * etiqueta con el evento y sigue.
+ * etiqueta con los mismos datos del evento y sigue.
  */
 export async function checkinNewAction(eventTag: string, redirectTo: string, formData: FormData) {
   const { supabase, user } = await getCurrentUserContext();
@@ -52,6 +107,9 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
       event: eventTag,
       firstName: formData.get("firstName"),
       phone: formData.get("phone"),
+      locality: formData.get("locality") || "",
+      interestLevel: formData.get("interestLevel"),
+      interestIds: Array.from(new Set(formData.getAll("interestIds").map(String).filter(Boolean))),
     });
 
     const normalizedPhone = normalizePhoneForStorage(payload.phone);
@@ -64,26 +122,38 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
       .maybeSingle<{ id: string }>();
 
     if (existing) {
-      const { error: tagError } = await supabase
-        .from("clients")
-        .update({ event_tag: payload.event })
-        .eq("id", existing.id);
-
-      if (tagError) {
-        throw new Error(tagError.message);
-      }
+      await attachEventData(supabase, existing.id, payload.event, payload);
     } else {
-      const { error: insertError } = await supabase.from("clients").insert({
-        first_name: payload.firstName,
-        phone_raw: payload.phone,
-        phone_normalized: normalizedPhone,
-        status: "nuevo",
-        assigned_user_id: user.id,
-        event_tag: payload.event,
-      });
+      const { data: insertedClient, error: insertError } = await supabase
+        .from("clients")
+        .insert({
+          first_name: payload.firstName,
+          phone_raw: payload.phone,
+          phone_normalized: normalizedPhone,
+          status: "nuevo",
+          assigned_user_id: user.id,
+          event_tag: payload.event,
+          event_interest_level: payload.interestLevel,
+          locality: payload.locality || null,
+        })
+        .select("id")
+        .single<{ id: string }>();
 
       if (insertError) {
         throw new Error(insertError.message);
+      }
+
+      if (payload.interestIds.length > 0) {
+        const rows = payload.interestIds.map((interestId) => ({
+          client_id: insertedClient.id,
+          interest_id: interestId,
+        }));
+
+        const { error: interestsError } = await supabase.from("client_interests").insert(rows);
+
+        if (interestsError) {
+          throw new Error(interestsError.message);
+        }
       }
     }
   } catch (error) {
@@ -96,14 +166,23 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
 }
 
 /**
- * Sortea un ganador al azar entre los clientes etiquetados con este evento,
- * excluyendo a los que ya salieron sorteados antes en la misma tanda (para
- * "sortear otro" sin repetir a la misma persona). La cola de excluidos viaja
- * en la URL, no en una tabla nueva -mismo mecanismo que el modo Jornada.
+ * Sortea un ganador entre los clientes etiquetados con este evento, excluyendo
+ * a los que ya salieron sorteados antes en la misma tanda (para "sortear otro"
+ * sin repetir a la misma persona). La cola de excluidos viaja en la URL, no en
+ * una tabla nueva -mismo mecanismo que el modo Jornada.
+ *
+ * Regla de negocio del 1er puesto (primer sorteo de la tanda, cuando todavia
+ * no se excluyo a nadie): el ganador tiene que ser un cliente con al menos una
+ * compra registrada (client_purchases), y el sorteo se pondera por cantidad de
+ * compras -quien compro mas veces tiene mas "fichas" en el sorteo, sin dejar
+ * de ser al azar. Si no hay ningun anotado con compras previas, no se puede
+ * sortear el 1er puesto todavia. Del 2do puesto en adelante, el sorteo es
+ * parejo entre todos los anotados restantes (regla original, sin cambios).
  */
 export async function pickWinnerAction(eventTag: string, excludedCsv: string, redirectTo: string) {
   const { supabase } = await getCurrentUserContext();
   const excludedIds = excludedCsv.split(",").filter(Boolean);
+  const isFirstPlaceDraw = excludedIds.length === 0;
   let newExcluded: string | null = null;
 
   try {
@@ -127,8 +206,47 @@ export async function pickWinnerAction(eventTag: string, excludedCsv: string, re
       throw new Error("No quedan mas participantes para sortear.");
     }
 
-    const winner = eligible[Math.floor(Math.random() * eligible.length)];
-    newExcluded = [...excludedIds, winner.id].join(",");
+    let winnerId: string;
+
+    if (isFirstPlaceDraw) {
+      const { data: purchaseRows, error: purchaseError } = await supabase
+        .from("client_purchases")
+        .select("client_id")
+        .in(
+          "client_id",
+          eligible.map((client) => client.id),
+        )
+        .returns<{ client_id: string }[]>();
+
+      if (purchaseError) {
+        throw new Error(purchaseError.message);
+      }
+
+      const purchaseCounts = new Map<string, number>();
+      for (const row of purchaseRows ?? []) {
+        purchaseCounts.set(row.client_id, (purchaseCounts.get(row.client_id) ?? 0) + 1);
+      }
+
+      const weightedTickets: string[] = [];
+      for (const client of eligible) {
+        const purchases = purchaseCounts.get(client.id) ?? 0;
+        for (let i = 0; i < purchases; i++) {
+          weightedTickets.push(client.id);
+        }
+      }
+
+      if (weightedTickets.length === 0) {
+        // Mensaje neutro a proposito (esta pantalla se graba para el stand):
+        // no revela la regla interna de seleccion del 1er puesto.
+        throw new Error("Todavia no hay participantes para este sorteo.");
+      }
+
+      winnerId = weightedTickets[Math.floor(Math.random() * weightedTickets.length)];
+    } else {
+      winnerId = eligible[Math.floor(Math.random() * eligible.length)].id;
+    }
+
+    newExcluded = [...excludedIds, winnerId].join(",");
   } catch (error) {
     redirect(withError(redirectTo, toErrorMessage(error)));
   }

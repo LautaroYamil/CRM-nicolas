@@ -89,11 +89,21 @@ export const checkinSearchSchema = z.object({
   query: z.string().trim().min(1, "Escribi un telefono o nombre para buscar"),
 });
 
+const eventInterestLevelValue = z.enum(["paso", "interesado"], {
+  message: "Indica si solo paso o si mostro interes real de compra",
+});
+
+export const checkinEventDataSchema = z.object({
+  locality: z.string().trim().optional(),
+  interestLevel: eventInterestLevelValue,
+  interestIds: z.array(z.string().uuid()).default([]),
+});
+
 export const checkinNewClientSchema = z.object({
   event: z.string().trim().min(1, "Falta el nombre del evento"),
   firstName: z.string().trim().min(1, "El nombre es obligatorio"),
   phone: z.string().trim().min(1, "El telefono es obligatorio"),
-});
+}).merge(checkinEventDataSchema);
 
 export const inviteSellerSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email invalido"),

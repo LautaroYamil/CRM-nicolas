@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { CLIENT_STATUS_OPTIONS, clientStatusChipClasses, clientStatusLabel } from "@/lib/crm/constants";
-import { formatDateTimeAr, formatRelativeAr } from "@/lib/crm/dates";
+import { formatDateTimeAr, formatRelativeAr, isoDaysAgo } from "@/lib/crm/dates";
 import { isOverdue } from "@/lib/crm/overdue";
 import { getClientStatusCounts } from "@/lib/crm/queries";
 
@@ -49,6 +49,22 @@ type ClientsPageProps = {
   }>;
 };
 
+const SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+/** Color del punto de urgencia junto a "Proximo seguimiento": vencido, por vencer (48hs), a tiempo, o sin agendar. */
+function followUpDotClasses(nextFollowUpAt: string | null, nowIso: string) {
+  if (!nextFollowUpAt) {
+    return "bg-outline-variant/50";
+  }
+
+  if (nextFollowUpAt < nowIso) {
+    return "bg-error";
+  }
+
+  const isSoon = new Date(nextFollowUpAt).getTime() - new Date(nowIso).getTime() <= SOON_WINDOW_MS;
+  return isSoon ? "bg-secondary" : "bg-outline";
+}
+
 function buildQuery(params: Record<string, string | undefined>) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -67,6 +83,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
 
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
+  const nowIso = new Date().toISOString();
 
   // PostgREST usa comas y parentesis como sintaxis en .or(): se quitan del texto buscado
   const search = (params.search ?? "").replace(/[,()"'\\]/g, " ").trim();
@@ -109,16 +126,46 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     );
   }
 
+  // Clientes cuyo seguimiento mas proximo (next_follow_up_at, sincronizado desde
+  // activities por trigger) ya paso. Mismo concepto de "vencido" que Agenda,
+  // pero a nivel cliente (un cliente vencido, no un conteo de actividades).
+  let overdueFollowUpQuery = supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .is("archived_at", null)
+    .not("next_follow_up_at", "is", null)
+    .lt("next_follow_up_at", nowIso);
+
+  if (profile.role === "admin" && params.seller) {
+    overdueFollowUpQuery = overdueFollowUpQuery.eq("assigned_user_id", params.seller);
+  }
+
+  const since30Iso = isoDaysAgo(30);
+
+  let convertedLast30Query = supabase
+    .from("client_status_changes")
+    .select("id, clients!inner(assigned_user_id)", { count: "exact", head: true })
+    .eq("new_status", "compro")
+    .gte("created_at", since30Iso);
+
+  if (profile.role === "admin" && params.seller) {
+    convertedLast30Query = convertedLast30Query.eq("clients.assigned_user_id", params.seller);
+  }
+
   const [
     { data: clients, count: totalFiltered, error },
     statusCountsResult,
     { data: sellerRows },
     { data: interestOptions },
+    { count: overdueFollowUpCount },
+    { count: convertedLast30Count },
   ] = await Promise.all([
     query.returns<ClientRow[]>(),
     getClientStatusCounts(supabase),
     supabase.from("profiles").select("id, full_name").eq("active", true).returns<SellerRow[]>(),
     supabase.from("interests").select("id, name").eq("active", true).order("name").returns<InterestOption[]>(),
+    overdueFollowUpQuery,
+    convertedLast30Query,
   ]);
 
   if (error) {
@@ -172,7 +219,6 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const showingTo = Math.min(from + PAGE_SIZE, total);
   const hasPrev = page > 1;
   const hasNext = showingTo < total;
-  const nowIso = new Date().toISOString();
 
   const baseParams = { search: search || undefined, seller: params.seller, interest: params.interest };
 
@@ -197,8 +243,43 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           </Link>
         </section>
 
+        {/* KPIs */}
+        <div className="grid grid-cols-2 divide-x divide-y divide-outline-variant/20 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest sm:grid-cols-4 sm:divide-y-0">
+          <div className="p-4 sm:p-5">
+            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+              Cartera activa
+            </p>
+            <p className="mt-1 text-headline-sm font-bold text-on-surface">{totalClients}</p>
+          </div>
+          <div className="p-4 sm:p-5">
+            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+              Sin contactar
+            </p>
+            <p className="mt-1 text-headline-sm font-bold text-on-surface">{statusCounts.get("nuevo") ?? 0}</p>
+          </div>
+          <div className="p-4 sm:p-5">
+            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+              Clientes vencidos
+            </p>
+            <p
+              className={clsx(
+                "mt-1 text-headline-sm font-bold",
+                (overdueFollowUpCount ?? 0) > 0 ? "text-error" : "text-on-surface",
+              )}
+            >
+              {overdueFollowUpCount ?? 0}
+            </p>
+          </div>
+          <div className="p-4 sm:p-5">
+            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+              Convertidos (30 dias)
+            </p>
+            <p className="mt-1 text-headline-sm font-bold text-on-surface">{convertedLast30Count ?? 0}</p>
+          </div>
+        </div>
+
         {/* Busqueda y filtros */}
-        <section className="space-y-4">
+        <section className="space-y-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 sm:p-5">
           <form method="get" className="flex flex-wrap items-center gap-3">
             {params.status ? <input type="hidden" name="status" value={params.status} /> : null}
             <div className="relative min-w-52 flex-1">
@@ -337,7 +418,18 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     <p className="text-on-surface-variant">
                       Ultimo contacto: {formatRelativeAr(client.last_contact_at)}
                     </p>
-                    <p className={clsx(followUpOverdue ? "font-bold text-error" : "text-on-surface-variant")}>
+                    <p
+                      className={clsx(
+                        "flex items-center gap-1.5",
+                        followUpOverdue ? "font-bold text-error" : "text-on-surface-variant",
+                      )}
+                    >
+                      <span
+                        className={clsx(
+                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          followUpDotClasses(client.next_follow_up_at, nowIso),
+                        )}
+                      />
                       Proximo: {formatDateTimeAr(client.next_follow_up_at)}
                     </p>
                     <p className="text-on-surface-variant">
@@ -392,7 +484,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           </ul>
 
           {/* Tabla (desktop) */}
-          <div className="hidden overflow-x-auto border-t border-outline-variant/30 xl:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest xl:block">
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
@@ -447,17 +539,27 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                         </span>
                       </td>
                       <td className="px-4 py-5 text-sm">{formatRelativeAr(client.last_contact_at)}</td>
-                      <td
-                        className={clsx(
-                          "px-4 py-5 text-sm font-bold",
-                          followUpOverdue
-                            ? "text-error"
-                            : client.next_follow_up_at
-                              ? "text-on-surface"
-                              : "font-normal text-on-surface-variant/60",
-                        )}
-                      >
-                        {formatDateTimeAr(client.next_follow_up_at)}
+                      <td className="px-4 py-5 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={clsx(
+                              "h-1.5 w-1.5 shrink-0 rounded-full",
+                              followUpDotClasses(client.next_follow_up_at, nowIso),
+                            )}
+                          />
+                          <span
+                            className={clsx(
+                              "font-bold",
+                              followUpOverdue
+                                ? "text-error"
+                                : client.next_follow_up_at
+                                  ? "text-on-surface"
+                                  : "font-normal text-on-surface-variant/60",
+                            )}
+                          >
+                            {formatDateTimeAr(client.next_follow_up_at)}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-5">
                         <span

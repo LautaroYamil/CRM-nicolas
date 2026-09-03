@@ -1,18 +1,34 @@
 import Link from "next/link";
 import { pickWinnerAction } from "@/app/checkin/actions";
+import { RouletteWheel } from "@/components/checkin/roulette-wheel";
 import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
+
+const MAX_WHEEL_SEGMENTS = 10;
 
 type SorteoPageProps = {
   searchParams: Promise<{ event?: string; excluded?: string; error?: string }>;
 };
 
-type WinnerRow = {
+type PoolRow = {
   id: string;
   first_name: string;
   last_name: string | null;
-  phone_normalized: string;
 };
+
+function fullName(row: PoolRow) {
+  return `${row.first_name} ${row.last_name ?? ""}`.trim();
+}
+
+/** Mezcla determinista solo para variar que subconjunto se muestra girando, no afecta al ganador (ya elegido en el servidor). */
+function shuffled<T>(items: T[]) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const params = await searchParams;
@@ -40,7 +56,16 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const excludedCsv = (params.excluded ?? "").trim();
   const excludedIds = excludedCsv.split(",").filter(Boolean);
   const winnerId = excludedIds[excludedIds.length - 1] ?? null;
+  // Exclusiones vigentes ANTES de este sorteo (para reconstruir que pool estuvo en juego).
+  const priorExcludedIds = winnerId ? excludedIds.slice(0, -1) : excludedIds;
+  const roundIsFirstPlace = priorExcludedIds.length === 0;
   const redirectBase = `/checkin/sorteo?event=${encodeURIComponent(eventTag)}`;
+
+  let totalQuery = supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .eq("event_tag", eventTag)
+    .is("archived_at", null);
 
   let remainingQuery = supabase
     .from("clients")
@@ -52,23 +77,79 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
     remainingQuery = remainingQuery.not("id", "in", `(${excludedIds.join(",")})`);
   }
 
-  const { count: remainingCount } = await remainingQuery;
-
-  const { count: totalCount } = await supabase
+  // Pool que estuvo "en juego" en esta ronda (para mostrar en la ruleta): los
+  // que quedaban antes de este sorteo, filtrados por la misma regla de negocio
+  // que uso pickWinnerAction (1er puesto: solo compradores previos).
+  let poolQuery = supabase
     .from("clients")
-    .select("id", { count: "exact", head: true })
+    .select("id, first_name, last_name")
     .eq("event_tag", eventTag)
     .is("archived_at", null);
 
-  const { data: winner } = winnerId
-    ? await supabase
-        .from("clients")
-        .select("id, first_name, last_name, phone_normalized")
-        .eq("id", winnerId)
-        .maybeSingle<WinnerRow>()
-    : { data: null };
+  if (priorExcludedIds.length > 0) {
+    poolQuery = poolQuery.not("id", "in", `(${priorExcludedIds.join(",")})`);
+  }
+
+  // Las 4 consultas independientes viajan juntas (no una atras de otra): en el
+  // wifi del stand cada round-trip de mas se nota.
+  const [{ count: totalCount }, { count: remainingCount }, { data: rawPool }, { data: fetchedWinner }] =
+    await Promise.all([
+      totalQuery,
+      remainingQuery,
+      poolQuery.returns<PoolRow[]>(),
+      winnerId
+        ? supabase.from("clients").select("id, first_name, last_name").eq("id", winnerId).maybeSingle<PoolRow>()
+        : Promise.resolve({ data: null }),
+    ]);
+
+  let pool = rawPool ?? [];
+
+  if (roundIsFirstPlace && pool.length > 0) {
+    const { data: purchaseRows } = await supabase
+      .from("client_purchases")
+      .select("client_id")
+      .in(
+        "client_id",
+        pool.map((client) => client.id),
+      )
+      .returns<{ client_id: string }[]>();
+
+    const buyerIds = new Set((purchaseRows ?? []).map((row) => row.client_id));
+    pool = pool.filter((client) => buyerIds.has(client.id));
+  }
+
+  // El ganador siempre se muestra, aunque por algun motivo no haya aparecido
+  // en el pool reconstruido (ej. quedo archivado despues de ganar): el nombre
+  // del cartel de "Ganador" nunca depende de esa reconstruccion.
+  const winnerRow = fetchedWinner ?? undefined;
+  if (winnerRow && !pool.some((client) => client.id === winnerRow.id)) {
+    pool = [winnerRow, ...pool];
+  }
+
+  // Armado de segmentos a mostrar: si hay mas candidatos que el maximo visual,
+  // se muestra un subconjunto al azar (el ganador siempre incluido) -no cambia
+  // quien gano, solo que tan lleno se ve el disco.
+  let wheelPool = pool;
+  if (pool.length > MAX_WHEEL_SEGMENTS) {
+    const others = shuffled(pool.filter((client) => client.id !== winnerId)).slice(
+      0,
+      MAX_WHEEL_SEGMENTS - (winnerRow ? 1 : 0),
+    );
+    wheelPool = winnerRow ? shuffled([winnerRow, ...others]) : others;
+  }
+
+  const names = wheelPool.map(fullName);
+  const highlightIndex = winnerRow ? wheelPool.findIndex((client) => client.id === winnerRow.id) : null;
+  const winnerName = winnerRow ? fullName(winnerRow) : null;
+  const nextPlaceNumber = excludedIds.length + 1;
 
   const pickAction = pickWinnerAction.bind(null, eventTag, excludedCsv, redirectBase);
+
+  // Mensajes neutros a proposito: esta pantalla se graba para el publico del
+  // stand, asi que no tiene que filtrar la regla interna de seleccion
+  // (compras previas ponderadas) del 1er puesto -la logica sigue funcionando
+  // igual por atras, solo que no se explica en pantalla.
+  const emptyLabel = "Todavia no hay participantes para este sorteo.";
 
   return (
     <AppShell profile={profile} title="Sorteo">
@@ -82,9 +163,14 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
         </Link>
 
         <h1 className="mb-1 text-headline-lg font-bold">{eventTag}</h1>
-        <p className="mb-8 text-body-lg text-on-surface-variant">
+        <p className="mb-4 text-body-lg text-on-surface-variant">
           {totalCount ?? 0} {totalCount === 1 ? "participante" : "participantes"}
           {excludedIds.length > 0 ? ` · ${excludedIds.length} ya salieron sorteados` : ""}
+        </p>
+
+        <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-outline-variant/40 bg-surface-container-lowest px-4 py-1.5 text-label-md font-bold text-on-surface-variant uppercase tracking-wider">
+          <span className="material-symbols-outlined text-[18px] text-primary">military_tech</span>
+          {nextPlaceNumber === 1 ? "1er puesto" : `${nextPlaceNumber}° puesto`}
         </p>
 
         {params.error ? (
@@ -93,25 +179,15 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
           </p>
         ) : null}
 
-        {winner ? (
-          <div className="mb-8 card-premium rounded-2xl border-2 border-primary/30 p-10">
-            <span className="material-symbols-outlined animate-bounce mb-3 text-6xl text-primary">
-              emoji_events
-            </span>
-            <p className="mb-1 text-label-md font-bold tracking-[0.2em] text-primary uppercase">Ganador</p>
-            <p className="text-headline-md font-bold">
-              {winner.first_name} {winner.last_name ?? ""}
-            </p>
-            <p className="mt-1 text-body-lg text-on-surface-variant">{winner.phone_normalized}</p>
-          </div>
-        ) : (
-          <div className="mb-8 card-premium rounded-2xl p-10">
-            <span className="material-symbols-outlined mb-3 text-6xl text-on-surface-variant/30">
-              emoji_events
-            </span>
-            <p className="text-body-lg text-on-surface-variant">Todavía no se sorteó a nadie.</p>
-          </div>
-        )}
+        <div className="mb-8">
+          <RouletteWheel
+            names={names}
+            highlightIndex={highlightIndex}
+            winnerName={winnerName}
+            spinToken={excludedCsv}
+            emptyLabel={emptyLabel}
+          />
+        </div>
 
         {(remainingCount ?? 0) > 0 ? (
           <form action={pickAction}>
@@ -120,7 +196,7 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-lg font-bold text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-[0.99]"
             >
               <span className="material-symbols-outlined">casino</span>
-              {winner ? "Sortear otro" : "Sortear ganador"}
+              {winnerId ? "Sortear otro" : "Sortear ganador"}
             </button>
           </form>
         ) : (
