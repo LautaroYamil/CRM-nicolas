@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { ZodError } from "zod";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { normalizePhoneForStorage } from "@/lib/crm/phone";
 import { checkinEventDataSchema, checkinNewClientSchema } from "@/lib/crm/validation";
@@ -9,6 +10,10 @@ import { checkinEventDataSchema, checkinNewClientSchema } from "@/lib/crm/valida
 type SupabaseClientLike = Awaited<ReturnType<typeof getCurrentUserContext>>["supabase"];
 
 function toErrorMessage(error: unknown) {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? "Datos invalidos";
+  }
+
   if (error instanceof Error && error.message) {
     return error.message;
   }

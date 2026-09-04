@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { checkinExistingAction, checkinNewAction } from "@/app/checkin/actions";
 import { AppShell } from "@/components/layout/app-shell";
+import { SubmitOnceButton } from "@/components/ui/submit-once-button";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 import { clientStatusChipClasses, clientStatusLabel } from "@/lib/crm/constants";
 
@@ -272,13 +273,13 @@ export default async function CheckinPage({ searchParams }: CheckinPageProps) {
                           <LocalityInput listId="checkin-localities" defaultValue={client.locality ?? ""} />
                           <InterestsPicker interests={interests} name="interestIds" />
                           <InterestLevelPicker name="interestLevel" />
-                          <button
-                            type="submit"
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+                          <SubmitOnceButton
+                            pendingLabel="Guardando..."
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] disabled:opacity-60"
                           >
                             <span className="material-symbols-outlined">how_to_reg</span>
                             Marcar que vino
-                          </button>
+                          </SubmitOnceButton>
                         </form>
                       )}
                     </div>
@@ -304,13 +305,13 @@ export default async function CheckinPage({ searchParams }: CheckinPageProps) {
                 <LocalityInput listId="checkin-localities" />
                 <InterestsPicker interests={interests} name="interestIds" />
                 <InterestLevelPicker name="interestLevel" />
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98]"
+                <SubmitOnceButton
+                  pendingLabel="Guardando..."
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] disabled:opacity-60"
                 >
                   <span className="material-symbols-outlined">person_add</span>
                   Cargar y anotar
-                </button>
+                </SubmitOnceButton>
               </form>
             </section>
           </>

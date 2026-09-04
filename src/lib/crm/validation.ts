@@ -99,10 +99,22 @@ export const checkinEventDataSchema = z.object({
   interestIds: z.array(z.string().uuid()).default([]),
 });
 
+// Minimo de digitos reales, no solo "no vacio": un telefono sin numeros
+// (typo, campo mal tocado) normaliza a texto vacio y haria que el chequeo de
+// duplicados de checkinNewAction junte por error a dos personas distintas
+// que hayan cometido el mismo error.
+const checkinPhoneValue = z
+  .string()
+  .trim()
+  .min(1, "El telefono es obligatorio")
+  .refine((value) => value.replace(/\D+/g, "").length >= 6, {
+    message: "El telefono tiene que tener al menos 6 numeros",
+  });
+
 export const checkinNewClientSchema = z.object({
   event: z.string().trim().min(1, "Falta el nombre del evento"),
   firstName: z.string().trim().min(1, "El nombre es obligatorio"),
-  phone: z.string().trim().min(1, "El telefono es obligatorio"),
+  phone: checkinPhoneValue,
 }).merge(checkinEventDataSchema);
 
 export const inviteSellerSchema = z.object({
