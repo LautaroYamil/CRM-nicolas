@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-slate-50" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Directorio de Clientes | CRM Ejecutivo</title>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars">
+    /* Custom thin scrollbars for table container */
+    .custom-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-full font-sans text-slate-900 bg-slate-50 antialiased selection:bg-slate-900 selection:text-white">
+<!-- BEGIN: TopGlobalHeader -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16 gap-4">
+<!-- Left: App Identity -->
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 rounded-xl bg-slate-900 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+            C
+          </div>
+<div class="flex items-center space-x-2">
+<span class="font-bold text-slate-900 tracking-tight text-lg">Clientes</span>
+<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium border border-slate-200">CRM Pro</span>
+</div>
+</div>
+<!-- Center: Quick Global Search bar -->
+<div class="hidden md:flex flex-1 max-w-md mx-6">
+<div class="relative w-full">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all placeholder:text-slate-400 text-slate-800" placeholder="Buscar clientes por ID, DNI o razón social..." type="text"/>
+</div>
+</div>
+<!-- Right: Current Date, Notifications & Main Action -->
+<div class="flex items-center gap-3">
+<div class="hidden lg:flex items-center text-xs font-medium text-slate-500 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200/60">
+<svg class="w-3.5 h-3.5 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>4 de sept de 2026</span>
+</div>
+<!-- New Client Trigger Button -->
+<button class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Nuevo Cliente</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- END: TopGlobalHeader -->
+<!-- BEGIN: MainContent -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<!-- BEGIN: TitleAndActionHeader -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div>
+<h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950">Directorio de Clientes</h1>
+<p class="text-sm text-slate-500 mt-1">Gestiona, segmenta y da seguimiento activo a toda tu cartera comercial.</p>
+</div>
+<!-- Action Button Group -->
+<div class="flex items-center gap-2 self-start sm:self-auto">
+<button class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Exportar</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-slate-600 bg-white border border-slate-200 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors shadow-xs" type="button">
+<svg class="w-4 h-4 text-slate-400 hover:text-rose-500" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Papelera</span>
+</button>
+</div>
+</div>
+<!-- END: TitleAndActionHeader -->
+<!-- BEGIN: MetricSummaryCards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Cartera Activa -->
+<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cartera Activa</span>
+<span class="p-2 bg-slate-100 rounded-lg text-slate-700">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="text-3xl font-bold tracking-tight text-slate-900">136</span>
+<span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center">
+            ↑ 12%
+          </span>
+</div>
+<p class="text-xs text-slate-400 mt-1">Total registrados en sistema</p>
+</div>
+<!-- Card 2: Sin Contactar -->
+<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sin Contactar</span>
+<span class="p-2 bg-amber-50 rounded-lg text-amber-600">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="text-3xl font-bold tracking-tight text-slate-900">71</span>
+<span class="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+            Requiere acción
+          </span>
+</div>
+<p class="text-xs text-slate-400 mt-1">Leads pendientes de primer toque</p>
+</div>
+<!-- Card 3: Clientes Vencidos -->
+<div class="bg-white p-5 rounded-xl border border-rose-100 bg-rose-50/20 shadow-xs hover:border-rose-200 transition-all">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Clientes Vencidos</span>
+<span class="p-2 bg-rose-100 text-rose-600 rounded-lg">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="text-3xl font-bold tracking-tight text-rose-600">29</span>
+<span class="text-xs font-medium text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+            Seguimiento vencido
+          </span>
+</div>
+<p class="text-xs text-rose-400 mt-1">Sin respuesta mayor a 15 días</p>
+</div>
+<!-- Card 4: Convertidos -->
+<div class="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+<div class="flex items-center justify-between">
+<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Convertidos (30 días)</span>
+<span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="text-3xl font-bold tracking-tight text-slate-900">24</span>
+<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+            17.6% ratio
+          </span>
+</div>
+<p class="text-xs text-slate-400 mt-1">Con órdenes cerradas este mes</p>
+</div>
+</div>
+<!-- END: MetricSummaryCards -->
+<!-- BEGIN: SearchAndFilterPanel -->
+<div class="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs space-y-4">
+<!-- Top filter controls row -->
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+<!-- Main Search input -->
+<div class="relative flex-1">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</span>
+<input class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white placeholder:text-slate-400" placeholder="Buscar por nombre, teléfono, vendedor o localidad..." type="text"/>
+</div>
+<!-- Filter Dropdown: Vendedores -->
+<div class="sm:w-56">
+<select class="w-full py-2 pl-3 pr-8 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900">
+<option value="">Todos los vendedores</option>
+<option selected="" value="nicolas">Nicolás (Asignado)</option>
+<option value="maria">María Sol</option>
+<option value="lucas">Lucas Duarte</option>
+</select>
+</div>
+<!-- Filter Dropdown: Intereses -->
+<div class="sm:w-52">
+<select class="w-full py-2 pl-3 pr-8 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900">
+<option value="">Todos los intereses</option>
+<option value="lavasecarropa">Lavasecarropas</option>
+<option value="heladera">Heladeras</option>
+<option value="cocina">Cocinas</option>
+<option value="tv">Smart TVs</option>
+<option value="aire">Aires Acondicionados</option>
+</select>
+</div>
+<!-- Filter Submit Button -->
+<button class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold tracking-wide transition-colors shadow-xs" type="button">
+          Buscar
+        </button>
+</div>
+<!-- Bottom status pills (segmented filter) -->
+<div class="pt-2 border-t border-slate-100 flex items-center overflow-x-auto custom-scroll pb-1 gap-1.5 text-xs font-medium">
+<button class="px-3 py-1.5 rounded-lg bg-slate-900 text-white font-semibold whitespace-nowrap shadow-xs">
+          Todos <span class="ml-1 opacity-80 font-normal">136</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          Nuevos <span class="ml-1 text-slate-400">71</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          Interesados <span class="ml-1 text-slate-400">34</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          En Seguimiento <span class="ml-1 text-slate-400">2</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          Compraron <span class="ml-1 text-slate-400">29</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          No Interesados <span class="ml-1 text-slate-400">0</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 whitespace-nowrap transition-colors">
+          Inactivos <span class="ml-1 text-slate-400">0</span>
+</button>
+</div>
+</div>
+<!-- END: SearchAndFilterPanel -->
+<!-- BEGIN: ClientTableCard -->
+<div class="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+<div class="overflow-x-auto custom-scroll">
+<table class="w-full text-left border-collapse text-sm">
+<!-- Table Headings -->
+<thead>
+<tr class="border-b border-slate-200 bg-slate-50/75 text-[11px] uppercase tracking-wider font-semibold text-slate-500">
+<th class="py-3.5 pl-6 pr-4" scope="col">Cliente</th>
+<th class="py-3.5 px-4" scope="col">Intereses</th>
+<th class="py-3.5 px-4" scope="col">Último Contacto</th>
+<th class="py-3.5 px-4" scope="col">Próximo Seguimiento</th>
+<th class="py-3.5 px-4 text-center" scope="col">Estado</th>
+<th class="py-3.5 px-4 text-center" scope="col">Compras</th>
+<th class="py-3.5 px-4" scope="col">Vendedor</th>
+<th class="py-3.5 pl-4 pr-6 text-right" scope="col">Acciones</th>
+</tr>
+</thead>
+<!-- Table Body Content -->
+<tbody class="divide-y divide-slate-100 text-slate-700">
+<!-- ROW 1: Roberto Pedros -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="py-4 pl-6 pr-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 shrink-0 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700">
+                    RP
+                  </div>
+<div>
+<span class="font-semibold text-slate-900 block leading-tight hover:text-blue-600 cursor-pointer">Roberto Pedros</span>
+<span class="text-xs text-slate-500 font-mono">+54 3757 678240</span>
+<span class="text-xs text-slate-400 block">Comandante Andresito</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200/60">
+                  Lavasecarropa
+                </span>
+</td>
+<td class="py-4 px-4 text-xs text-slate-400">
+                —
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-xs text-slate-400">
+<span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span>
+<span>Sin programar</span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/70 uppercase">
+                  NUEVO
+                </span>
+</td>
+<td class="py-4 px-4 text-center font-semibold text-slate-700">
+                0
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-900 text-[10px] text-white font-medium flex items-center justify-center">N</div>
+<span class="text-xs font-medium text-slate-800">Nicolas</span>
+</div>
+</td>
+<td class="py-4 pl-4 pr-6 text-right">
+<div class="flex items-center justify-end gap-1 text-slate-400 group-hover:text-slate-600">
+<button class="p-1.5 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors" title="Enviar WhatsApp / Mensaje">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors" title="Ver detalle de cliente">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Editar información">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Enviar a papelera">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 2: Johana Parfeñiuk -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="py-4 pl-6 pr-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 shrink-0 rounded-full bg-violet-50 text-violet-700 border border-violet-200/60 flex items-center justify-center font-bold text-xs">
+                    JP
+                  </div>
+<div>
+<span class="font-semibold text-slate-900 block leading-tight hover:text-blue-600 cursor-pointer">Johana Parfeñiuk</span>
+<span class="text-xs text-slate-500 font-mono">+54 3754 433826</span>
+<span class="text-xs text-slate-400 block">Comandante Andresito</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200/60">
+                  Heladera No Frost
+                </span>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">
+                hace 16 horas
+              </td>
+<td class="py-4 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-50 text-emerald-800 text-xs font-medium border border-emerald-200/60">
+<span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>14/09/2026, 08:00 h</span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/70 uppercase">
+                  SEGUIMIENTO
+                </span>
+</td>
+<td class="py-4 px-4 text-center font-semibold text-slate-700">
+                1
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-900 text-[10px] text-white font-medium flex items-center justify-center">N</div>
+<span class="text-xs font-medium text-slate-800">Nicolas</span>
+</div>
+</td>
+<td class="py-4 pl-4 pr-6 text-right">
+<div class="flex items-center justify-end gap-1 text-slate-400 group-hover:text-slate-600">
+<button class="p-1.5 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors" title="Enviar WhatsApp / Mensaje">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors" title="Ver detalle">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Editar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Eliminar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 3: Mirta Kachan -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="py-4 pl-6 pr-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 shrink-0 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center justify-center font-bold text-xs">
+                    MK
+                  </div>
+<div>
+<span class="font-semibold text-slate-900 block leading-tight hover:text-blue-600 cursor-pointer">Mirta Kachan</span>
+<span class="text-xs text-slate-500 font-mono">+54 3757 672782</span>
+<span class="text-xs text-slate-400 block">Comandante Andresito</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200/60">
+                  Cocina a Gas
+                </span>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">
+                hace 2 días
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+<span class="h-2 w-2 rounded-full bg-slate-400"></span>
+<span>15/09/2026, 11:00 h</span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70 uppercase">
+                  INTERESADO
+                </span>
+</td>
+<td class="py-4 px-4 text-center font-semibold text-slate-700">
+                1
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-900 text-[10px] text-white font-medium flex items-center justify-center">N</div>
+<span class="text-xs font-medium text-slate-800">Nicolas</span>
+</div>
+</td>
+<td class="py-4 pl-4 pr-6 text-right">
+<div class="flex items-center justify-end gap-1 text-slate-400 group-hover:text-slate-600">
+<button class="p-1.5 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors" title="Enviar WhatsApp / Mensaje">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors" title="Ver detalle">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Editar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Eliminar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 4: Tatiana Schuls -->
+<tr class="hover:bg-slate-50/80 transition-colors group">
+<td class="py-4 pl-6 pr-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 shrink-0 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center font-bold text-xs">
+                    TS
+                  </div>
+<div>
+<span class="font-semibold text-slate-900 block leading-tight hover:text-blue-600 cursor-pointer">Tatiana Schuls</span>
+<span class="text-xs text-slate-500 font-mono">+54 3755 582627</span>
+<span class="text-xs text-slate-400 block">Comandante Andresito</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200/60">
+                  Smart TV 50"
+                </span>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">
+                hace 16 horas
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+<span class="h-2 w-2 rounded-full bg-slate-400"></span>
+<span>11/09/2026, 10:00 h</span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/70 uppercase">
+                  NUEVO
+                </span>
+</td>
+<td class="py-4 px-4 text-center font-semibold text-slate-700">
+                0
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-900 text-[10px] text-white font-medium flex items-center justify-center">N</div>
+<span class="text-xs font-medium text-slate-800">Nicolas</span>
+</div>
+</td>
+<td class="py-4 pl-4 pr-6 text-right">
+<div class="flex items-center justify-end gap-1 text-slate-400 group-hover:text-slate-600">
+<button class="p-1.5 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors" title="Enviar WhatsApp / Mensaje">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors" title="Ver detalle">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Editar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Eliminar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 5: Carlos Benítez (Vencido) -->
+<tr class="hover:bg-slate-50/80 transition-colors group bg-rose-50/10">
+<td class="py-4 pl-6 pr-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 shrink-0 rounded-full bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center font-bold text-xs">
+                    CB
+                  </div>
+<div>
+<span class="font-semibold text-slate-900 block leading-tight hover:text-blue-600 cursor-pointer">Carlos Benítez</span>
+<span class="text-xs text-slate-500 font-mono">+54 3757 401928</span>
+<span class="text-xs text-slate-400 block">Puerto Iguazú</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200/60">
+                  Aire Acondicionado
+                </span>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">
+                hace 3 días
+              </td>
+<td class="py-4 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-rose-100 text-rose-800 text-xs font-semibold">
+<svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Vencido ayer</span>
+</div>
+</td>
+<td class="py-4 px-4 text-center">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/70 uppercase">
+                  VENCIDO
+                </span>
+</td>
+<td class="py-4 px-4 text-center font-semibold text-slate-700">
+                2
+              </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-slate-900 text-[10px] text-white font-medium flex items-center justify-center">N</div>
+<span class="text-xs font-medium text-slate-800">Nicolas</span>
+</div>
+</td>
+<td class="py-4 pl-4 pr-6 text-right">
+<div class="flex items-center justify-end gap-1 text-slate-400 group-hover:text-slate-600">
+<button class="p-1.5 hover:text-emerald-600 hover:bg-slate-100 rounded-md transition-colors" title="Enviar WhatsApp urgente">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors" title="Ver detalle">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors" title="Editar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Eliminar">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- BEGIN: TablePaginationFooter -->
+<div class="px-6 py-4 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500">
+<div class="flex items-center gap-2">
+<span>Mostrando <strong>1-5</strong> de <strong>136</strong> clientes</span>
+<span class="text-slate-300">|</span>
+<div class="flex items-center gap-1.5">
+<span>Ver</span>
+<select class="text-xs bg-white border border-slate-200 rounded py-1 px-2 focus:ring-1 focus:ring-slate-900 focus:outline-none text-slate-700">
+<option>10</option>
+<option selected="">25</option>
+<option>50</option>
+<option>100</option>
+</select>
+<span>por pág.</span>
+</div>
+</div>
+<nav class="flex items-center gap-1">
+<button class="px-2.5 py-1.5 rounded border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-40" disabled="">
+            Anterior
+          </button>
+<button class="px-3 py-1.5 rounded bg-slate-900 text-white font-semibold shadow-xs">
+            1
+          </button>
+<button class="px-3 py-1.5 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            2
+          </button>
+<button class="px-3 py-1.5 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            3
+          </button>
+<span class="px-2 text-slate-400">...</span>
+<button class="px-3 py-1.5 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            6
+          </button>
+<button class="px-2.5 py-1.5 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            Siguiente
+          </button>
+</nav>
+</div>
+<!-- END: TablePaginationFooter -->
+</div>
+<!-- END: ClientTableCard -->
+</main>
+<!-- END: MainContent -->
+</body></html>

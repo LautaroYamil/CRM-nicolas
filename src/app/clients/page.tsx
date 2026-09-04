@@ -9,7 +9,8 @@ import { formatDateTimeAr, formatRelativeAr, isoDaysAgo } from "@/lib/crm/dates"
 import { isOverdue } from "@/lib/crm/overdue";
 import { getClientStatusCounts } from "@/lib/crm/queries";
 
-const PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 25;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 type ClientRow = {
   id: string;
@@ -46,23 +47,75 @@ type ClientsPageProps = {
     seller?: string;
     interest?: string;
     page?: string;
+    pageSize?: string;
   }>;
 };
 
 const SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
 
-/** Color del punto de urgencia junto a "Proximo seguimiento": vencido, por vencer (48hs), a tiempo, o sin agendar. */
-function followUpDotClasses(nextFollowUpAt: string | null, nowIso: string) {
+type FollowUpUrgency = "overdue" | "soon" | "scheduled" | "none";
+
+function followUpUrgency(nextFollowUpAt: string | null, nowIso: string): FollowUpUrgency {
   if (!nextFollowUpAt) {
-    return "bg-outline-variant/50";
+    return "none";
   }
 
   if (nextFollowUpAt < nowIso) {
-    return "bg-error";
+    return "overdue";
   }
 
   const isSoon = new Date(nextFollowUpAt).getTime() - new Date(nowIso).getTime() <= SOON_WINDOW_MS;
-  return isSoon ? "bg-secondary" : "bg-outline";
+  return isSoon ? "soon" : "scheduled";
+}
+
+/** Punto + fondo del "Proximo seguimiento": vencido, por vencer (48hs), agendado, o sin agendar. */
+function followUpBadgeClasses(urgency: FollowUpUrgency) {
+  switch (urgency) {
+    case "overdue":
+      return "bg-error-container/30 text-error font-bold";
+    case "soon":
+      return "bg-secondary-fixed/35 text-on-secondary-fixed font-semibold";
+    case "scheduled":
+      return "text-on-surface";
+    case "none":
+      return "text-on-surface-variant/60";
+  }
+}
+
+function followUpDotClasses(urgency: FollowUpUrgency) {
+  switch (urgency) {
+    case "overdue":
+      return "bg-error";
+    case "soon":
+      return "bg-secondary";
+    case "scheduled":
+      return "bg-outline";
+    case "none":
+      return "bg-outline-variant/50";
+  }
+}
+
+// Paleta chica para variar el color del avatar de cada cliente -solo estetico
+// (determinista por id, asi el mismo cliente siempre tiene el mismo color),
+// no representa ningun dato real.
+const AVATAR_PALETTE = [
+  "bg-primary-container/10 text-primary",
+  "bg-secondary-fixed/45 text-on-secondary-fixed",
+  "bg-error-container/25 text-on-error-container",
+  "bg-green-50 text-green-700",
+  "bg-surface-container-high text-on-surface-variant",
+];
+
+function hashToIndex(value: string, mod: number) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash % mod;
+}
+
+function avatarClasses(clientId: string) {
+  return AVATAR_PALETTE[hashToIndex(clientId, AVATAR_PALETTE.length)];
 }
 
 function buildQuery(params: Record<string, string | undefined>) {
@@ -77,12 +130,36 @@ function buildQuery(params: Record<string, string | undefined>) {
   return text ? `?${text}` : "";
 }
 
+/** Ventana de numeros de pagina a mostrar, con "..." para los saltos grandes. */
+function buildPageWindow(current: number, totalPages: number): (number | "...")[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const keep = new Set(
+    [1, totalPages, current - 1, current, current + 1].filter((p) => p >= 1 && p <= totalPages),
+  );
+  const sorted = Array.from(keep).sort((a, b) => a - b);
+
+  const result: (number | "...")[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) {
+      result.push("...");
+    }
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const params = await searchParams;
   const { supabase, profile } = await getCurrentUserContext();
 
+  const pageSize = PAGE_SIZE_OPTIONS.includes(Number(params.pageSize))
+    ? Number(params.pageSize)
+    : DEFAULT_PAGE_SIZE;
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-  const from = (page - 1) * PAGE_SIZE;
+  const from = (page - 1) * pageSize;
   const nowIso = new Date().toISOString();
 
   // PostgREST usa comas y parentesis como sintaxis en .or(): se quitan del texto buscado
@@ -96,7 +173,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
     )
     .is("archived_at", null)
     .order("created_at", { ascending: false })
-    .range(from, from + PAGE_SIZE - 1);
+    .range(from, from + pageSize - 1);
 
   if (params.status) {
     query = query.eq("status", params.status);
@@ -215,12 +292,19 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const totalClients = statusCountsResult.total;
 
   const total = totalFiltered ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const showingFrom = total === 0 ? 0 : from + 1;
-  const showingTo = Math.min(from + PAGE_SIZE, total);
+  const showingTo = Math.min(from + pageSize, total);
   const hasPrev = page > 1;
-  const hasNext = showingTo < total;
+  const hasNext = page < totalPages;
 
-  const baseParams = { search: search || undefined, seller: params.seller, interest: params.interest };
+  const pageSizeParam = pageSize !== DEFAULT_PAGE_SIZE ? String(pageSize) : undefined;
+  const baseParams = {
+    search: search || undefined,
+    seller: params.seller,
+    interest: params.interest,
+    pageSize: pageSizeParam,
+  };
 
   return (
     <AppShell profile={profile} title="Clientes">
@@ -244,37 +328,64 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         </section>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 divide-x divide-y divide-outline-variant/20 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest sm:grid-cols-4 sm:divide-y-0">
-          <div className="p-4 sm:p-5">
-            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
-              Cartera activa
-            </p>
-            <p className="mt-1 text-headline-sm font-bold text-on-surface">{totalClients}</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="card-premium rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+                Cartera activa
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant">
+                <span className="material-symbols-outlined text-[18px]">groups</span>
+              </span>
+            </div>
+            <p className="mt-2 text-headline-sm font-bold text-on-surface">{totalClients}</p>
+            <p className="mt-1 text-[11px] text-on-surface-variant/70">Total registrados en el sistema</p>
           </div>
-          <div className="p-4 sm:p-5">
-            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
-              Sin contactar
-            </p>
-            <p className="mt-1 text-headline-sm font-bold text-on-surface">{statusCounts.get("nuevo") ?? 0}</p>
+
+          <div className="card-premium rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+                Sin contactar
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary-fixed/45 text-on-secondary-fixed">
+                <span className="material-symbols-outlined text-[18px]">schedule</span>
+              </span>
+            </div>
+            <p className="mt-2 text-headline-sm font-bold text-on-surface">{statusCounts.get("nuevo") ?? 0}</p>
+            <p className="mt-1 text-[11px] text-on-surface-variant/70">En estado Nuevo, sin primer contacto</p>
           </div>
-          <div className="p-4 sm:p-5">
-            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
-              Clientes vencidos
-            </p>
+
+          <div className="card-premium rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+                Clientes vencidos
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-error-container/30 text-error">
+                <span className="material-symbols-outlined text-[18px]">warning</span>
+              </span>
+            </div>
             <p
               className={clsx(
-                "mt-1 text-headline-sm font-bold",
+                "mt-2 text-headline-sm font-bold",
                 (overdueFollowUpCount ?? 0) > 0 ? "text-error" : "text-on-surface",
               )}
             >
               {overdueFollowUpCount ?? 0}
             </p>
+            <p className="mt-1 text-[11px] text-on-surface-variant/70">Seguimiento pendiente ya vencido</p>
           </div>
-          <div className="p-4 sm:p-5">
-            <p className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
-              Convertidos (30 dias)
-            </p>
-            <p className="mt-1 text-headline-sm font-bold text-on-surface">{convertedLast30Count ?? 0}</p>
+
+          <div className="card-premium rounded-xl p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-[0.15em] text-on-surface-variant/60 uppercase">
+                Convertidos (30 dias)
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              </span>
+            </div>
+            <p className="mt-2 text-headline-sm font-bold text-on-surface">{convertedLast30Count ?? 0}</p>
+            <p className="mt-1 text-[11px] text-on-surface-variant/70">Pasaron a Compro en los ultimos 30 dias</p>
           </div>
         </div>
 
@@ -282,6 +393,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         <section className="space-y-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-4 sm:p-5">
           <form method="get" className="flex flex-wrap items-center gap-3">
             {params.status ? <input type="hidden" name="status" value={params.status} /> : null}
+            {pageSizeParam ? <input type="hidden" name="pageSize" value={pageSizeParam} /> : null}
             <div className="relative min-w-52 flex-1">
               <span className="material-symbols-outlined absolute top-1/2 left-4 -translate-y-1/2 text-on-surface-variant/60">
                 search
@@ -383,6 +495,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
               const clientName = `${client.first_name} ${client.last_name ?? ""}`.trim();
               const interests = interestsByClient.get(client.id) ?? [];
               const purchaseCount = purchaseCountByClient.get(client.id) ?? 0;
+              const urgency = followUpUrgency(client.next_follow_up_at, nowIso);
               const followUpOverdue =
                 client.next_follow_up_at !== null && isOverdue(client.next_follow_up_at, nowIso);
 
@@ -420,16 +533,12 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     </p>
                     <p
                       className={clsx(
-                        "flex items-center gap-1.5",
-                        followUpOverdue ? "font-bold text-error" : "text-on-surface-variant",
+                        "inline-flex items-center gap-1.5 rounded px-1.5 py-0.5",
+                        followUpBadgeClasses(urgency),
+                        followUpOverdue ? "font-bold" : "",
                       )}
                     >
-                      <span
-                        className={clsx(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
-                          followUpDotClasses(client.next_follow_up_at, nowIso),
-                        )}
-                      />
+                      <span className={clsx("h-1.5 w-1.5 shrink-0 rounded-full", followUpDotClasses(urgency))} />
                       Proximo: {formatDateTimeAr(client.next_follow_up_at)}
                     </p>
                     <p className="text-on-surface-variant">
@@ -487,15 +596,15 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           <div className="hidden overflow-x-auto rounded-xl border border-outline-variant/30 bg-surface-container-lowest xl:block">
             <table className="w-full min-w-[900px]">
               <thead>
-                <tr className="text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
-                  <th className="py-5 pr-4">Cliente</th>
+                <tr className="border-b border-outline-variant/20 bg-surface-container-low/50 text-left text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/60 uppercase">
+                  <th className="py-5 pr-4 pl-5">Cliente</th>
                   <th className="px-4 py-5">Intereses</th>
                   <th className="px-4 py-5">Ultimo contacto</th>
                   <th className="px-4 py-5">Proximo seguimiento</th>
                   <th className="px-4 py-5">Estado</th>
                   <th className="px-4 py-5">Compras</th>
                   {profile.role === "admin" ? <th className="px-4 py-5">Vendedor</th> : null}
-                  <th className="py-5 pl-4 text-right">Acciones</th>
+                  <th className="py-5 pr-5 pl-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20">
@@ -509,14 +618,19 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                     .toUpperCase();
                   const interests = interestsByClient.get(client.id) ?? [];
                   const purchaseCount = purchaseCountByClient.get(client.id) ?? 0;
-                  const followUpOverdue =
-                    client.next_follow_up_at !== null && client.next_follow_up_at < nowIso;
+                  const urgency = followUpUrgency(client.next_follow_up_at, nowIso);
+                  const sellerName = sellersById.get(client.assigned_user_id) ?? "-";
 
                   return (
                     <tr key={client.id} className="group transition-colors hover:bg-surface-container-low">
-                      <td className="py-5 pr-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-primary-container/10 font-bold text-primary">
+                      <td className="py-4 pr-4 pl-5">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={clsx(
+                              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold",
+                              avatarClasses(client.id),
+                            )}
+                          >
                             {initials}
                           </div>
                           <div className="min-w-0">
@@ -533,35 +647,26 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="max-w-48 px-4 py-5 text-sm text-on-surface-variant">
+                      <td className="max-w-48 px-4 py-4 text-sm text-on-surface-variant">
                         <span className="block truncate">
                           {interests.length > 0 ? interests.join(", ") : "-"}
                         </span>
                       </td>
-                      <td className="px-4 py-5 text-sm">{formatRelativeAr(client.last_contact_at)}</td>
-                      <td className="px-4 py-5 text-sm">
-                        <div className="flex items-center gap-2">
+                      <td className="px-4 py-4 text-sm">{formatRelativeAr(client.last_contact_at)}</td>
+                      <td className="px-4 py-4 text-sm">
+                        <span
+                          className={clsx(
+                            "inline-flex items-center gap-1.5 rounded px-2 py-1",
+                            followUpBadgeClasses(urgency),
+                          )}
+                        >
                           <span
-                            className={clsx(
-                              "h-1.5 w-1.5 shrink-0 rounded-full",
-                              followUpDotClasses(client.next_follow_up_at, nowIso),
-                            )}
+                            className={clsx("h-1.5 w-1.5 shrink-0 rounded-full", followUpDotClasses(urgency))}
                           />
-                          <span
-                            className={clsx(
-                              "font-bold",
-                              followUpOverdue
-                                ? "text-error"
-                                : client.next_follow_up_at
-                                  ? "text-on-surface"
-                                  : "font-normal text-on-surface-variant/60",
-                            )}
-                          >
-                            {formatDateTimeAr(client.next_follow_up_at)}
-                          </span>
-                        </div>
+                          {formatDateTimeAr(client.next_follow_up_at)}
+                        </span>
                       </td>
-                      <td className="px-4 py-5">
+                      <td className="px-4 py-4">
                         <span
                           className={clsx(
                             "inline-block rounded border px-2 py-1 text-[10px] font-bold tracking-wider whitespace-nowrap uppercase",
@@ -571,7 +676,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                           {clientStatusLabel(client.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-5 text-sm">
+                      <td className="px-4 py-4 text-sm">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{purchaseCount}</span>
                           {purchaseCount >= 2 ? (
@@ -582,11 +687,16 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                         </div>
                       </td>
                       {profile.role === "admin" ? (
-                        <td className="px-4 py-5 text-sm font-semibold">
-                          {sellersById.get(client.assigned_user_id) ?? "-"}
+                        <td className="px-4 py-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-on-primary">
+                              {sellerName.charAt(0).toUpperCase()}
+                            </span>
+                            <span className="font-semibold">{sellerName}</span>
+                          </div>
                         </td>
                       ) : null}
-                      <td className="py-5 pl-4 text-right">
+                      <td className="py-4 pr-5 pl-4 text-right">
                         <div className="flex justify-end gap-3 opacity-60 transition-opacity group-hover:opacity-100">
                           <a
                             href={`https://wa.me/${client.phone_normalized.replace(/\D+/g, "")}`}
@@ -634,14 +744,43 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         {/* Paginacion */}
         {total > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/20 pt-4">
-            <p className="text-sm text-on-surface-variant">
-              Mostrando{" "}
-              <span className="font-bold text-on-surface">
-                {showingFrom} - {showingTo}
-              </span>{" "}
-              de <span className="font-bold text-on-surface">{total}</span> clientes
-            </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-on-surface-variant">
+              <p>
+                Mostrando{" "}
+                <span className="font-bold text-on-surface">
+                  {showingFrom} - {showingTo}
+                </span>{" "}
+                de <span className="font-bold text-on-surface">{total}</span> clientes
+              </p>
+              <form method="get" className="flex items-center gap-1.5 text-xs">
+                {params.status ? <input type="hidden" name="status" value={params.status} /> : null}
+                {search ? <input type="hidden" name="search" value={search} /> : null}
+                {profile.role === "admin" && params.seller ? (
+                  <input type="hidden" name="seller" value={params.seller} />
+                ) : null}
+                {params.interest ? <input type="hidden" name="interest" value={params.interest} /> : null}
+                <span>Ver</span>
+                <select
+                  name="pageSize"
+                  defaultValue={String(pageSize)}
+                  className="rounded border border-outline-variant/40 bg-surface-container-lowest px-2 py-1 text-xs focus:ring-1 focus:ring-primary focus:outline-none"
+                >
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+                <span>por pag.</span>
+                <button
+                  type="submit"
+                  className="rounded border border-outline-variant/40 px-2 py-1 text-[10px] font-bold uppercase transition-colors hover:bg-surface-container"
+                >
+                  Aplicar
+                </button>
+              </form>
+            </div>
+            <nav className="flex flex-wrap items-center gap-1.5">
               {hasPrev ? (
                 <Link
                   href={`/clients${buildQuery({ ...baseParams, status: params.status, page: String(page - 1) })}`}
@@ -650,9 +789,26 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                   <span className="material-symbols-outlined text-base">chevron_left</span>
                 </Link>
               ) : null}
-              <span className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-bold text-on-primary">
-                {page}
-              </span>
+              {buildPageWindow(page, totalPages).map((p, index) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${index}`} className="px-1 text-sm text-on-surface-variant/50">
+                    …
+                  </span>
+                ) : (
+                  <Link
+                    key={p}
+                    href={`/clients${buildQuery({ ...baseParams, status: params.status, page: String(p) })}`}
+                    className={clsx(
+                      "flex min-w-9 items-center justify-center rounded-lg px-2.5 py-1.5 text-xs font-bold",
+                      p === page
+                        ? "bg-primary text-on-primary"
+                        : "border border-outline-variant/40 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container",
+                    )}
+                  >
+                    {p}
+                  </Link>
+                ),
+              )}
               {hasNext ? (
                 <Link
                   href={`/clients${buildQuery({ ...baseParams, status: params.status, page: String(page + 1) })}`}
@@ -661,7 +817,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
                   <span className="material-symbols-outlined text-base">chevron_right</span>
                 </Link>
               ) : null}
-            </div>
+            </nav>
           </div>
         ) : null}
       </div>
