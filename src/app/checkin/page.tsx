@@ -31,23 +31,39 @@ const inputClasses =
 // Para el proximo evento, cambiar este valor (o dejarlo vacio y tipear a mano).
 const DEFAULT_EVENT_TAG = "Fiesta del Agricultor 2026";
 
-/** "Solo paso" / "Interes real de compra": dos botones grandes, un solo tap, pensado para tablet. */
-function InterestLevelPicker({ name }: { name: string }) {
+/**
+ * "Solo paso" / "Interes real de compra": dos botones grandes, un solo tap,
+ * pensado para tablet. Cuando se elige "Interes real" aparece un cajon de
+ * texto opcional para anotar que fue lo que la persona busco -mostrado y
+ * ocultado solo con CSS (`:has()`), sin JS, para no convertir la pantalla en
+ * un client component.
+ */
+function InterestLevelPicker({ levelName, noteName }: { levelName: string; noteName: string }) {
   return (
-    <div>
+    <div className="group/interest">
       <span className="mb-1.5 block text-label-md font-semibold">Que tan interesado se mostro?</span>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-outline-variant/40 bg-surface-container-lowest px-3 py-3 text-center transition-colors has-checked:border-on-surface-variant has-checked:bg-surface-container-high">
-          <input type="radio" name={name} value="paso" required className="sr-only" />
+          <input type="radio" name={levelName} value="paso" required className="sr-only" />
           <span className="material-symbols-outlined text-[22px] text-on-surface-variant">directions_walk</span>
           <span className="text-label-sm font-bold">Solo paso</span>
         </label>
         <label className="flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-outline-variant/40 bg-surface-container-lowest px-3 py-3 text-center transition-colors has-checked:border-primary has-checked:bg-primary has-checked:text-on-primary">
-          <input type="radio" name={name} value="interesado" required className="sr-only" />
+          <input type="radio" name={levelName} value="interesado" required className="sr-only" />
           <span className="material-symbols-outlined text-[22px]">local_fire_department</span>
           <span className="text-label-sm font-bold">Interes real</span>
         </label>
       </div>
+      <label className="mt-3 hidden group-has-[input[value='interesado']:checked]/interest:block">
+        <span className="mb-1.5 block text-label-md font-semibold">Que le interesa? (opcional)</span>
+        <textarea
+          name={noteName}
+          rows={2}
+          maxLength={500}
+          placeholder="Ej: living de 3 cuerpos, color gris"
+          className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+        />
+      </label>
     </div>
   );
 }
@@ -272,7 +288,7 @@ export default async function CheckinPage({ searchParams }: CheckinPageProps) {
                         >
                           <LocalityInput listId="checkin-localities" defaultValue={client.locality ?? ""} />
                           <InterestsPicker interests={interests} name="interestIds" />
-                          <InterestLevelPicker name="interestLevel" />
+                          <InterestLevelPicker levelName="interestLevel" noteName="interestNote" />
                           <SubmitOnceButton
                             pendingLabel="Guardando..."
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] disabled:opacity-60"
@@ -304,7 +320,7 @@ export default async function CheckinPage({ searchParams }: CheckinPageProps) {
                 <input name="phone" required placeholder="Telefono" className={inputClasses} />
                 <LocalityInput listId="checkin-localities" />
                 <InterestsPicker interests={interests} name="interestIds" />
-                <InterestLevelPicker name="interestLevel" />
+                <InterestLevelPicker levelName="interestLevel" noteName="interestNote" />
                 <SubmitOnceButton
                   pendingLabel="Guardando..."
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-lg font-bold text-on-primary shadow-sm transition-all hover:bg-on-surface-variant active:scale-[0.98] disabled:opacity-60"

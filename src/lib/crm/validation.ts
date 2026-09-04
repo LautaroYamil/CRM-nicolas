@@ -96,6 +96,7 @@ const eventInterestLevelValue = z.enum(["paso", "interesado"], {
 export const checkinEventDataSchema = z.object({
   locality: z.string().trim().optional(),
   interestLevel: eventInterestLevelValue,
+  interestNote: z.string().trim().max(500, "Maximo 500 caracteres").optional(),
   interestIds: z.array(z.string().uuid()).default([]),
 });
 

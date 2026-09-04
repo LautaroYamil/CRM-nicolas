@@ -30,6 +30,7 @@ function readEventDataFromFormData(formData: FormData) {
   return checkinEventDataSchema.parse({
     locality: formData.get("locality") || "",
     interestLevel: formData.get("interestLevel"),
+    interestNote: formData.get("interestNote") || "",
     interestIds: Array.from(new Set(formData.getAll("interestIds").map(String).filter(Boolean))),
   });
 }
@@ -45,13 +46,20 @@ async function attachEventData(
   supabase: SupabaseClientLike,
   clientId: string,
   eventTag: string,
-  eventData: { locality?: string; interestLevel: string; interestIds: string[] },
+  eventData: { locality?: string; interestLevel: string; interestNote?: string; interestIds: string[] },
 ) {
+  // La descripcion solo tiene sentido junto a "interes real": si el formulario
+  // la trae cargada pero el nivel es "paso" (ej. cambio de opcion sin borrar el
+  // texto), no se guarda.
+  const interestNote =
+    eventData.interestLevel === "interesado" && eventData.interestNote ? eventData.interestNote : null;
+
   const { error: updateError } = await supabase
     .from("clients")
     .update({
       event_tag: eventTag,
       event_interest_level: eventData.interestLevel,
+      event_interest_note: interestNote,
       ...(eventData.locality ? { locality: eventData.locality } : {}),
     })
     .eq("id", clientId);
@@ -114,6 +122,7 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
       phone: formData.get("phone"),
       locality: formData.get("locality") || "",
       interestLevel: formData.get("interestLevel"),
+      interestNote: formData.get("interestNote") || "",
       interestIds: Array.from(new Set(formData.getAll("interestIds").map(String).filter(Boolean))),
     });
 
@@ -139,6 +148,7 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
           assigned_user_id: user.id,
           event_tag: payload.event,
           event_interest_level: payload.interestLevel,
+          event_interest_note: payload.interestLevel === "interesado" && payload.interestNote ? payload.interestNote : null,
           locality: payload.locality || null,
         })
         .select("id")
