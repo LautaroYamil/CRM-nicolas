@@ -173,16 +173,19 @@ export async function checkinNewAction(eventTag: string, redirectTo: string, for
 /**
  * Sortea un ganador entre los clientes etiquetados con este evento, excluyendo
  * a los que ya salieron sorteados antes en la misma tanda (para "sortear otro"
- * sin repetir a la misma persona, en cualquiera de los 5 puestos). La cola de
+ * sin repetir a la misma persona, en cualquiera de los 7 puestos). La cola de
  * excluidos viaja en la URL, no en una tabla nueva -mismo mecanismo que el
  * modo Jornada.
  *
- * Regla de negocio (igual para los 5 puestos, no solo el primero): todos los
+ * Regla de negocio (igual para los 7 puestos, no solo el primero): todos los
  * anotados entran al sorteo -no hay una lista aparte de "compradores"-, pero
  * cada uno pesa distinto: 1 ficha base + 1 ficha extra por cada compra
  * registrada (client_purchases). Asi cualquiera puede salir sorteado, pero
  * quien ya compro (y mas veces compro) tiene mas chances, sin que el sorteo
  * deje de ser al azar ni se trabe si todavia no hay ningun comprador anotado.
+ * El orden de sorteo va del puesto mas chico al mas grande (7mo primero, 1er
+ * puesto al final); esta funcion no necesita saber en que puesto esta, eso lo
+ * calcula la pantalla a partir de cuantos ya se excluyeron.
  */
 export async function pickWinnerAction(eventTag: string, excludedCsv: string, redirectTo: string) {
   const { supabase } = await getCurrentUserContext();

@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getCurrentUserContext } from "@/lib/auth/current-user";
 
 const MAX_WHEEL_SEGMENTS = 10;
-const MAX_PLACES = 5;
+const MAX_PLACES = 7;
 
 type SorteoPageProps = {
   searchParams: Promise<{ event?: string; excluded?: string; error?: string }>;
@@ -130,7 +130,9 @@ export default async function SorteoPage({ searchParams }: SorteoPageProps) {
   const names = wheelPool.map(fullName);
   const highlightIndex = winnerRow ? wheelPool.findIndex((client) => client.id === winnerRow.id) : null;
   const winnerName = winnerRow ? fullName(winnerRow) : null;
-  const nextPlaceNumber = placesAwarded + 1;
+  // Los puestos se sortean del mas chico al mas grande: el primer sorteo de la
+  // tanda es el 7mo puesto y el ultimo (el gran premio) es el 1er puesto.
+  const nextPlaceNumber = MAX_PLACES - placesAwarded;
   const allPlacesAwarded = placesAwarded >= MAX_PLACES;
 
   const pickAction = pickWinnerAction.bind(null, eventTag, excludedCsv, redirectBase);
